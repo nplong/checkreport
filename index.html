@@ -191,28 +191,22 @@
     <script>
 
 
-		// --- AUTHENTICATION ---
-        function checkLogin() {
-            const pass = document.getElementById('passInput').value;
-            
-            // CHANGE PASSWORD HERE IF NEEDED
-            if (pass === "Udfly1") {
-                // Hide login screen
-                document.getElementById('loginStep').classList.add('hidden');
-                // Focus on the main input for speed
-                document.getElementById('rawInput').focus();
-            } else {
-                // Show error
-                const err = document.getElementById('loginError');
-                const inp = document.getElementById('passInput');
-                err.classList.remove('hidden');
-                inp.classList.add('border-red-500', 'bg-red-50');
-                inp.value = '';
-                setTimeout(() => {
-                    inp.classList.remove('border-red-500', 'bg-red-50');
-                }, 2000);
-            }
-        }
+		// --- SECURE AUTHENTICATION ---
+		async function checkLogin() {
+	        const pass = document.getElementById('passInput').value;
+	        const msgBuffer = new TextEncoder().encode(pass);
+	        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+	        const hashArray = Array.from(new Uint8Array(hashBuffer));
+	        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+	        const targetHash = "2b81bcbe5c18872568784199ca8f825592945d0f3a3dbfedfd5af1fa5e57b698"; 
+	        
+	        if (hashHex === "2b81bcbe5c18872568784199ca8f825592945d0f3a3dbfedfd5af1fa5e57b698") {
+	            document.getElementById('loginStep').classList.add('hidden');
+	            document.getElementById('rawInput').focus();
+	        } else {
+	            // ... error handling ...
+	        }
+	    }
 		
         // Initialize Icons
         lucide.createIcons();
