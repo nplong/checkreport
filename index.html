@@ -36,7 +36,7 @@
         th { font-weight: 800 !important; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 h-screen flex flex-col overflow-hidden">
+<body class="bg-slate-100 text-slate-900 h-screen flex flex-col overflow-hidden" onload="initApp()">
 
 	<!-- LOGIN OVERLAY -->
     <div id="loginStep" class="fixed inset-0 z-50 bg-slate-200 flex items-center justify-center">
@@ -192,6 +192,30 @@
 
 
 		// --- SECURE AUTHENTICATION ---
+		const SESSION_KEY = 'dm_session_v1'; // The name of the saved file in the browser
+        const SESSION_DURATION = 12 * 60 * 60 * 1000; // 12 Hours in milliseconds
+        // To make it 24 hours, change 12 to 24.
+
+        // 1. Run this when page loads (Triggered by <body onload="...">)
+        function initApp() {
+            const savedTime = localStorage.getItem(SESSION_KEY);
+            const currentTime = new Date().getTime();
+
+            // If a session exists AND it is not expired
+            if (savedTime && (currentTime < parseInt(savedTime))) {
+                // Auto-Unlock
+                document.getElementById('loginStep').classList.add('hidden');
+                
+                // Focus on the main input for speed
+                // We use a small timeout to ensure the DOM is ready
+                setTimeout(() => {
+                    const rawInput = document.getElementById('rawInput');
+                    if (rawInput) rawInput.focus();
+                }, 100);
+            } 
+            // Else: Do nothing. The login screen is already blocking the view.
+        }
+		
 		async function checkLogin() {
 	        const pass = document.getElementById('passInput').value;
 	        const msgBuffer = new TextEncoder().encode(pass);
@@ -201,12 +225,38 @@
 	        const targetHash = "2b81bcbe5c18872568784199ca8f825592945d0f3a3dbfedfd5af1fa5e57b698"; 
 	        
 	        if (hashHex === "2b81bcbe5c18872568784199ca8f825592945d0f3a3dbfedfd5af1fa5e57b698") {
+				// A. Set the Session Expiry Time
+                const expiryTime = new Date().getTime() + SESSION_DURATION;
+                localStorage.setItem(SESSION_KEY, expiryTime);
+				
+				// B. Unlock the App
 	            document.getElementById('loginStep').classList.add('hidden');
 	            document.getElementById('rawInput').focus();
-	        } else {
-	            // ... error handling ...
-	        }
-	    }
+			} else {
+                // C. Handle Wrong Password
+                const err = document.getElementById('loginError');
+                const inp = document.getElementById('passInput');
+                if(err) err.classList.remove('hidden');
+                if(inp) {
+                    inp.classList.add('border-red-500', 'bg-red-50');
+                    inp.value = '';
+                    setTimeout(() => {
+                        inp.classList.remove('border-red-500', 'bg-red-50');
+                    }, 2000);
+                }
+	    	}
+		}
+
+		// Helper Hash Function (Required for the checkLogin above to work)
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash |= 0; 
+            }
+            return hash.toString();
+        }
 		
         // Initialize Icons
         lucide.createIcons();
