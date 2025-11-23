@@ -323,6 +323,7 @@
         }
 
 function renderTable() {
+            const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
             let sumNew = 0;
 
@@ -356,7 +357,7 @@ function renderTable() {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 group transition-colors border-b border-slate-100';
                 
-                // CHANGES: Removed readonly, Removed Lock Icon, Added oninput/onblur
+                // CRITICAL CHANGE BELOW: Look at the 'oninput' attribute
                 tr.innerHTML = `
                     <td class="p-3 font-bold text-slate-700 text-xl break-words">${row.key}</td>
                     <td class="p-3 font-mono text-slate-600 border-l bg-slate-50/30 text-right text-xl">${row.baseVal}</td>
@@ -365,7 +366,7 @@ function renderTable() {
                                class="w-full h-full px-4 py-3 outline-none bg-transparent font-mono text-right cursor-pointer placeholder:text-yellow-300/50 focus:bg-yellow-50 transition-colors text-xl ${inputColorClass}"
                                value="${row.newVal}"
                                onpaste="handleSmartPaste(event, ${idx})"
-                               oninput="updateValue(${idx}, this.value)"
+                               oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); updateValue(${idx}, this.value)"
                                onblur="renderTable()">
                     </td>
                     <td class="p-3 text-center border-l align-middle whitespace-nowrap">${statusHTML}</td>
@@ -383,7 +384,7 @@ function renderTable() {
                 tableBody.appendChild(tr);
             });
 
-            // Update Total
+            // Update Total logic...
             totalData.new = sumNew;
             document.getElementById('totalBase').innerText = formatNum(totalData.base);
             document.getElementById('totalNew').innerText = formatNum(totalData.new);
@@ -397,7 +398,7 @@ function renderTable() {
             } else {
                  if (diffTotal < 0.01) {
                     totalEl.className = "p-4 font-mono text-green-700 font-bold border-l border-yellow-200 bg-green-50 text-right text-xl";
-                    totalStatusHTML = `<span class="text-base bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200">ตรง</span>`;
+                    totalStatusHTML = `<span class="text-base bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200">✓ ตรง</span>`;
                  } else {
                     const isLower = totalData.new < totalData.base;
                     totalEl.className = `p-4 font-mono ${isLower ? 'text-blue-700' : 'text-red-600'} font-bold border-l border-yellow-200 bg-yellow-50 text-right text-xl`;
@@ -406,7 +407,6 @@ function renderTable() {
             }
             document.getElementById('totalStatus').innerHTML = totalStatusHTML;
 
-            // Summary Status
             const summaryEl = document.getElementById('summaryStatus');
             if (totalData.new === 0) summaryEl.innerHTML = '-';
             else if (diffTotal < 0.01) summaryEl.innerHTML = '<span class="text-green-600 text-2xl">PASSED</span>';
@@ -420,34 +420,42 @@ function renderTable() {
             appData[idx].newVal = val;
         };
 
-        // Smart Paste: Handles both Bulk (Ctrl+V list) and Single (Right Click)
+// STRICT SMART PASTE
         window.handleSmartPaste = function(e, startIndex) {
+            // 1. STOP the browser from pasting raw text (This fixes the issue)
+            e.preventDefault(); 
+
             const text = e.clipboardData.getData('text');
             if (!text) return;
 
-            // Check if this is a bulk paste (multiple lines)
+            // 2. Split into lines
             const lines = text.split(/\n/).map(l => l.trim()).filter(l => l);
 
-            if (lines.length > 1) {
-                // BULK PASTE: We handle it manually
-                e.preventDefault();
+            // 3. Process every line (whether it's 1 line or 100 lines)
+            lines.forEach((line, i) => {
+                const targetIndex = startIndex + i;
                 
-                lines.forEach((line, i) => {
-                    const targetIndex = startIndex + i;
-                    if (targetIndex < appData.length) {
-                        // Extract number logic
-                        // Capture numbers with commas, optional decimals
-						const match = line.match(/([0-9,]+(?:\.[0-9]+)?)/);
-                        appData[targetIndex].newVal = match ? match[1] : line;
+                // Only update if the row exists
+                if (targetIndex < appData.length) {
+                    // Regex: Find the first sequence that looks like a number (123 or 123.45 or 1,234.56)
+                    // This ignores "abc" but captures "85,350" inside "Total: 85,350 USD"
+                    const match = line.match(/([0-9,]+(?:\.[0-9]+)?)/);
+                    
+                    let cleanVal = '';
+                    if (match) {
+                        cleanVal = match[0]; // Get the number part
+                        // Double check: Strip any accidental non-math chars just in case
+                        cleanVal = cleanVal.replace(/[^0-9.,]/g, '');
                     }
-                });
-                // Re-render immediately to show all data
-                renderTable();
-                showToast('Bulk Data Pasted');
-            } 
-            // ELSE: Single line paste? Let default browser behavior happen.
-            // The 'oninput' event will catch the new value.
-            // The 'onblur' event will trigger the calculation/coloring.
+
+                    appData[targetIndex].newVal = cleanVal;
+                }
+            });
+
+            // 4. Update UI
+            renderTable();
+            // Optional: Give feedback if it was a big paste
+            if (lines.length > 1) showToast('Bulk Data Pasted');
         };
 
         window.updateRemark = function(idx, val) {
