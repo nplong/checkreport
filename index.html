@@ -322,7 +322,34 @@
             step2.classList.remove('hidden');
         }
 
-function renderTable() {
+		// --- FORMATTING HELPER ---
+        function formatCurrency(value) {
+            if (!value) return '';
+            
+            // 1. Remove all commas to get a raw number string (e.g. "102,54.20" -> "10254.20")
+            let cleanStr = value.toString().replace(/,/g, '');
+            
+            // 2. Safety check: If multiple dots exist, keep only the first one
+            // (Basic parseFloat handles this, but let's be cleaner)
+            const parts = cleanStr.split('.');
+            if (parts.length > 2) {
+                cleanStr = parts[0] + '.' + parts.slice(1).join('');
+            }
+
+            // 3. Parse to Float
+            const num = parseFloat(cleanStr);
+            
+            // 4. Return formatted string or empty if invalid
+            if (isNaN(num)) return '';
+            
+            // 5. Format: Commas + exactly 2 decimal places
+            return num.toLocaleString('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+        }
+
+		function renderTable() {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
             let sumNew = 0;
@@ -362,12 +389,12 @@ function renderTable() {
                     <td class="p-3 font-bold text-slate-700 text-xl break-words">${row.key}</td>
                     <td class="p-3 font-mono text-slate-600 border-l bg-slate-50/30 text-right text-xl">${row.baseVal}</td>
                     <td class="p-0 border-l border-yellow-100 bg-yellow-50/10 relative group-focus-within:bg-yellow-50">
-                        <input type="text" placeholder="Paste/Type"
-                               class="w-full h-full px-4 py-3 outline-none bg-transparent font-mono text-right cursor-pointer placeholder:text-yellow-300/50 focus:bg-yellow-50 transition-colors text-xl ${inputColorClass}"
-                               value="${row.newVal}"
-                               onpaste="handleSmartPaste(event, ${idx})"
-                               oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); updateValue(${idx}, this.value)"
-                               onblur="renderTable()">
+	                        <input type="text" placeholder="Paste/Type"
+							       class="w-full h-full px-4 py-3 outline-none bg-transparent font-mono text-right cursor-pointer placeholder:text-yellow-300/50 focus:bg-yellow-50 transition-colors text-xl ${inputColorClass}"
+							       value="${row.newVal}"
+							       onpaste="handleSmartPaste(event, ${idx})"
+							       oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); updateValue(${idx}, this.value)"
+							       onblur="finalizeInput(${idx}, this.value)">
                     </td>
                     <td class="p-3 text-center border-l align-middle whitespace-nowrap">${statusHTML}</td>
                     <td class="p-2 border-l">
@@ -414,6 +441,46 @@ function renderTable() {
 
             lucide.createIcons(); 
         }
+
+		// 1. New function to handle the "Blur" event
+        window.finalizeInput = function(idx, val) {
+            // Format the value to xxx,xxx.xx
+            const formatted = formatCurrency(val);
+            
+            // Update data model
+            appData[idx].newVal = formatted;
+            
+            // Re-render table to show the change and update colors
+            renderTable();
+        };
+
+        // 2. Update handleSmartPaste to auto-format pasted data
+        window.handleSmartPaste = function(e, startIndex) {
+            e.preventDefault(); // Force manual handling
+            const text = e.clipboardData.getData('text');
+            if (!text) return;
+
+            const lines = text.split(/\n/).map(l => l.trim()).filter(l => l);
+
+            lines.forEach((line, i) => {
+                const targetIndex = startIndex + i;
+                if (targetIndex < appData.length) {
+                    // Extract raw number pattern
+                    const match = line.match(/([0-9,]+(?:\.[0-9]+)?)/);
+                    
+                    if (match) {
+                        // Send it through our formatter immediately
+                        appData[targetIndex].newVal = formatCurrency(match[0]);
+                    } else {
+                        // If no number found, clear it
+                        appData[targetIndex].newVal = '';
+                    }
+                }
+            });
+            renderTable();
+            showToast('Data Pasted & Formatted');
+        };
+		
 
 // New helper to sync data as you type
         window.updateValue = function(idx, val) {
