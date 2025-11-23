@@ -436,7 +436,8 @@ function renderTable() {
                     const targetIndex = startIndex + i;
                     if (targetIndex < appData.length) {
                         // Extract number logic
-                        const match = line.match(/([\d,]+\.\d{2})/);
+                        // Capture numbers with commas, optional decimals
+						const match = line.match(/([0-9,]+(?:\.[0-9]+)?)/);
                         appData[targetIndex].newVal = match ? match[1] : line;
                     }
                 });
