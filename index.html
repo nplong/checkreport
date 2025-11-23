@@ -322,7 +322,7 @@
             step2.classList.remove('hidden');
         }
 
-        function renderTable() {
+function renderTable() {
             tableBody.innerHTML = '';
             let sumNew = 0;
 
@@ -356,14 +356,17 @@
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 group transition-colors border-b border-slate-100';
                 
+                // CHANGES: Removed readonly, Removed Lock Icon, Added oninput/onblur
                 tr.innerHTML = `
                     <td class="p-3 font-bold text-slate-700 text-xl break-words">${row.key}</td>
                     <td class="p-3 font-mono text-slate-600 border-l bg-slate-50/30 text-right text-xl">${row.baseVal}</td>
                     <td class="p-0 border-l border-yellow-100 bg-yellow-50/10 relative group-focus-within:bg-yellow-50">
-                        <input type="text" readonly placeholder="Ctrl+V"
+                        <input type="text" placeholder="Paste/Type"
                                class="w-full h-full px-4 py-3 outline-none bg-transparent font-mono text-right cursor-pointer placeholder:text-yellow-300/50 focus:bg-yellow-50 transition-colors text-xl ${inputColorClass}"
                                value="${row.newVal}"
-                               onpaste="handleForcePaste(event, ${idx})">
+                               onpaste="handleSmartPaste(event, ${idx})"
+                               oninput="updateValue(${idx}, this.value)"
+                               onblur="renderTable()">
                     </td>
                     <td class="p-3 text-center border-l align-middle whitespace-nowrap">${statusHTML}</td>
                     <td class="p-2 border-l">
@@ -394,7 +397,7 @@
             } else {
                  if (diffTotal < 0.01) {
                     totalEl.className = "p-4 font-mono text-green-700 font-bold border-l border-yellow-200 bg-green-50 text-right text-xl";
-                    totalStatusHTML = `<span class="text-base bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200">✓ ตรง</span>`;
+                    totalStatusHTML = `<span class="text-base bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200">ตรง</span>`;
                  } else {
                     const isLower = totalData.new < totalData.base;
                     totalEl.className = `p-4 font-mono ${isLower ? 'text-blue-700' : 'text-red-600'} font-bold border-l border-yellow-200 bg-yellow-50 text-right text-xl`;
@@ -412,19 +415,38 @@
             lucide.createIcons(); 
         }
 
-        window.handleForcePaste = function(e, startIndex) {
-            e.preventDefault();
+// New helper to sync data as you type
+        window.updateValue = function(idx, val) {
+            appData[idx].newVal = val;
+        };
+
+        // Smart Paste: Handles both Bulk (Ctrl+V list) and Single (Right Click)
+        window.handleSmartPaste = function(e, startIndex) {
             const text = e.clipboardData.getData('text');
             if (!text) return;
+
+            // Check if this is a bulk paste (multiple lines)
             const lines = text.split(/\n/).map(l => l.trim()).filter(l => l);
-            lines.forEach((line, i) => {
-                const targetIndex = startIndex + i;
-                if (targetIndex < appData.length) {
-                    const match = line.match(/([\d,]+\.\d{2})/);
-                    appData[targetIndex].newVal = match ? match[1] : line;
-                }
-            });
-            renderTable();
+
+            if (lines.length > 1) {
+                // BULK PASTE: We handle it manually
+                e.preventDefault();
+                
+                lines.forEach((line, i) => {
+                    const targetIndex = startIndex + i;
+                    if (targetIndex < appData.length) {
+                        // Extract number logic
+                        const match = line.match(/([\d,]+\.\d{2})/);
+                        appData[targetIndex].newVal = match ? match[1] : line;
+                    }
+                });
+                // Re-render immediately to show all data
+                renderTable();
+                showToast('Bulk Data Pasted');
+            } 
+            // ELSE: Single line paste? Let default browser behavior happen.
+            // The 'oninput' event will catch the new value.
+            // The 'onblur' event will trigger the calculation/coloring.
         };
 
         window.updateRemark = function(idx, val) {
