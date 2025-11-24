@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Check Report</title>
+    <title>DataMatch Audit v6.10</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PDF & Image Libraries -->
@@ -44,8 +44,8 @@
             <div class="bg-blue-600 text-white w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg transform rotate-3">
                 <i data-lucide="lock" class="w-10 h-10"></i>
             </div>
-            <h2 class="text-3xl font-bold text-slate-800 mb-2">ใส่รหัสก่อนจ้าาาา</h2>
-            <p class="text-slate-500 mb-8 text-base">รหัสที่เราคุ้นเคย</p>
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">Restricted Access</h2>
+            <p class="text-slate-500 mb-8 text-base">Enter passcode to access DataMatch.</p>
             
             <div class="relative">
                 <input type="password" id="passInput" 
@@ -74,9 +74,9 @@
         <div id="step1" class="absolute inset-0 flex items-center justify-center p-8 fade-in z-20 bg-slate-100">
             <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-10 w-full max-w-4xl flex flex-col gap-6">
                 <div>
-                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Copy-paste ยอด Top-up Balance มาวางตรงนี้</h2>
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">1. ก๊อปปี้ยอด Top-up Balance มาวาง</h2>
                     <p class="text-slate-500 text-lg">
-                        ลากดำตั้งแต่เลข 1 จนถึงยอดรวม - Ctrt C แล้วมาวางลงในกล่องด้านล่างได้เลย
+                        ลากดำข้อมูลดิบแล้ว copy-paste ลงในกล่องด้านล่างได้เลย (Auto Process)
                     </p>
                 </div>
                 
@@ -127,11 +127,11 @@
                     <table class="w-full text-left border-collapse table-fixed">
                         <thead>
                             <tr class="border-b-2 border-slate-200">
-                                <th class="p-3 w-[12%] text-xl font-bold text-slate-600 bg-slate-50 first:rounded-tl-lg">XO</th>
+                                <th class="p-3 w-[10%] text-xl font-bold text-slate-600 bg-slate-50 first:rounded-tl-lg">XO</th>
                                 <th class="p-3 w-[14%] text-xl font-bold text-slate-600 bg-slate-50 text-right border-l border-slate-200">ยอดในบัญชี</th>
-                                <th class="p-2 w-[16%] text-xl font-bold text-slate-600 bg-yellow-50 text-right border-l border-yellow-200">ยอดสายการบิน</th>
-                                <th class="p-3 w-[16%] text-xl font-bold text-slate-600 bg-slate-50 text-center border-l border-slate-200">สถานะ</th>
-                                <th class="p-3 w-[42%] text-xl font-bold text-slate-600 bg-slate-50 border-l border-slate-200 last:rounded-tr-lg">หมายเหตุ</th>
+                                <th class="p-2 w-[14%] text-xl font-bold text-slate-600 bg-yellow-50 text-right border-l border-yellow-200">ยอดสายการบิน</th>
+                                <th class="p-3 w-[15%] text-xl font-bold text-slate-600 bg-slate-50 text-center border-l border-slate-200">สถานะ</th>
+                                <th class="p-3 w-[47%] text-xl font-bold text-slate-600 bg-slate-50 border-l border-slate-200 last:rounded-tr-lg">หมายเหตุ</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-100">
@@ -322,35 +322,7 @@
             step2.classList.remove('hidden');
         }
 
-		// --- FORMATTING HELPER ---
-        function formatCurrency(value) {
-            if (!value) return '';
-            
-            // 1. Remove all commas to get a raw number string (e.g. "102,54.20" -> "10254.20")
-            let cleanStr = value.toString().replace(/,/g, '');
-            
-            // 2. Safety check: If multiple dots exist, keep only the first one
-            // (Basic parseFloat handles this, but let's be cleaner)
-            const parts = cleanStr.split('.');
-            if (parts.length > 2) {
-                cleanStr = parts[0] + '.' + parts.slice(1).join('');
-            }
-
-            // 3. Parse to Float
-            const num = parseFloat(cleanStr);
-            
-            // 4. Return formatted string or empty if invalid
-            if (isNaN(num)) return '';
-            
-            // 5. Format: Commas + exactly 2 decimal places
-            return num.toLocaleString('en-US', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-            });
-        }
-
-		function renderTable() {
-            const tableBody = document.getElementById('tableBody');
+        function renderTable() {
             tableBody.innerHTML = '';
             let sumNew = 0;
 
@@ -384,17 +356,14 @@
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 group transition-colors border-b border-slate-100';
                 
-                // CRITICAL CHANGE BELOW: Look at the 'oninput' attribute
                 tr.innerHTML = `
                     <td class="p-3 font-bold text-slate-700 text-xl break-words">${row.key}</td>
                     <td class="p-3 font-mono text-slate-600 border-l bg-slate-50/30 text-right text-xl">${row.baseVal}</td>
                     <td class="p-0 border-l border-yellow-100 bg-yellow-50/10 relative group-focus-within:bg-yellow-50">
-	                        <input type="text" placeholder="อยากทำอะไรก็ทำ"
-							       class="w-full h-full px-4 py-3 outline-none bg-transparent font-mono text-right cursor-pointer placeholder:text-yellow-300/50 focus:bg-yellow-50 transition-colors text-xl ${inputColorClass}"
-							       value="${row.newVal}"
-							       onpaste="handleSmartPaste(event, ${idx})"
-							       oninput="this.value = this.value.replace(/[^0-9.,]/g, ''); updateValue(${idx}, this.value)"
-							       onblur="finalizeInput(${idx}, this.value)">
+                        <input type="text" readonly placeholder="Ctrl+V"
+                               class="w-full h-full px-4 py-3 outline-none bg-transparent font-mono text-right cursor-pointer placeholder:text-yellow-300/50 focus:bg-yellow-50 transition-colors text-xl ${inputColorClass}"
+                               value="${row.newVal}"
+                               onpaste="handleForcePaste(event, ${idx})">
                     </td>
                     <td class="p-3 text-center border-l align-middle whitespace-nowrap">${statusHTML}</td>
                     <td class="p-2 border-l">
@@ -411,7 +380,7 @@
                 tableBody.appendChild(tr);
             });
 
-            // Update Total logic...
+            // Update Total
             totalData.new = sumNew;
             document.getElementById('totalBase').innerText = formatNum(totalData.base);
             document.getElementById('totalNew').innerText = formatNum(totalData.new);
@@ -434,6 +403,7 @@
             }
             document.getElementById('totalStatus').innerHTML = totalStatusHTML;
 
+            // Summary Status
             const summaryEl = document.getElementById('summaryStatus');
             if (totalData.new === 0) summaryEl.innerHTML = '-';
             else if (diffTotal < 0.01) summaryEl.innerHTML = '<span class="text-green-600 text-2xl">PASSED</span>';
@@ -442,87 +412,19 @@
             lucide.createIcons(); 
         }
 
-		// 1. New function to handle the "Blur" event
-        window.finalizeInput = function(idx, val) {
-            // Format the value to xxx,xxx.xx
-            const formatted = formatCurrency(val);
-            
-            // Update data model
-            appData[idx].newVal = formatted;
-            
-            // Re-render table to show the change and update colors
-            renderTable();
-        };
-
-        // 2. Update handleSmartPaste to auto-format pasted data
-        window.handleSmartPaste = function(e, startIndex) {
-            e.preventDefault(); // Force manual handling
+        window.handleForcePaste = function(e, startIndex) {
+            e.preventDefault();
             const text = e.clipboardData.getData('text');
             if (!text) return;
-
             const lines = text.split(/\n/).map(l => l.trim()).filter(l => l);
-
             lines.forEach((line, i) => {
                 const targetIndex = startIndex + i;
                 if (targetIndex < appData.length) {
-                    // Extract raw number pattern
-                    const match = line.match(/([0-9,]+(?:\.[0-9]+)?)/);
-                    
-                    if (match) {
-                        // Send it through our formatter immediately
-                        appData[targetIndex].newVal = formatCurrency(match[0]);
-                    } else {
-                        // If no number found, clear it
-                        appData[targetIndex].newVal = '';
-                    }
+                    const match = line.match(/([\d,]+\.\d{2})/);
+                    appData[targetIndex].newVal = match ? match[1] : line;
                 }
             });
             renderTable();
-            showToast('Data Pasted & Formatted');
-        };
-		
-
-// New helper to sync data as you type
-        window.updateValue = function(idx, val) {
-            appData[idx].newVal = val;
-        };
-
-// STRICT SMART PASTE
-        window.handleSmartPaste = function(e, startIndex) {
-            // 1. STOP the browser from pasting raw text (This fixes the issue)
-            e.preventDefault(); 
-
-            const text = e.clipboardData.getData('text');
-            if (!text) return;
-
-            // 2. Split into lines
-            const lines = text.split(/\n/).map(l => l.trim()).filter(l => l);
-
-            // 3. Process every line (whether it's 1 line or 100 lines)
-            lines.forEach((line, i) => {
-                const targetIndex = startIndex + i;
-                
-                // Only update if the row exists
-                if (targetIndex < appData.length) {
-                    // Regex: Find the first sequence that looks like a number (123 or 123.45 or 1,234.56)
-                    // This ignores "abc" but captures "85,350" inside "Total: 85,350 USD"
-                    const match = line.match(/([0-9,]+(?:\.[0-9]+)?)/);
-                    
-                    let cleanVal = '';
-                    if (match) {
-                        cleanVal = match[0]; // Get the number part
-                        // Double check: Strip any accidental non-math chars just in case
-                        cleanVal = cleanVal.replace(/[^0-9.,]/g, '');
-                    }
-
-                    appData[targetIndex].newVal = cleanVal;
-                }
-            });
-
-            // 4. Update UI
-            renderTable();
-            // Optional: Give feedback if it was a big paste
-            if (lines.length > 1) showToast('Bulk Data Pasted');
         };
 
         window.updateRemark = function(idx, val) {
