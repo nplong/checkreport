@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Check Report v12</title>
+    <title>Check Report v20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
@@ -119,11 +119,12 @@
                     <table class="w-full text-left border-collapse table-fixed">
                         <thead>
                             <tr class="border-b-2 border-slate-200">
-                                <th class="p-3 w-[12%] text-xl font-bold text-slate-600 bg-slate-50 first:rounded-tl-lg">XO</th>
+                                <th class="p-3 w-[10%] text-xl font-bold text-slate-600 bg-slate-50 first:rounded-tl-lg">XO</th>
                                 <th class="p-3 w-[14%] text-xl font-bold text-slate-600 bg-slate-50 text-right border-l border-slate-200">Base Balance</th>
-                                <th class="p-2 w-[10%] text-xl font-bold text-slate-600 bg-slate-50 text-center border-l border-slate-200">Diff</th> 
-                                <th class="p-2 w-[16%] text-xl font-bold text-slate-600 bg-yellow-50 text-right border-l border-slate-200">New Balance</th>
-                                <th class="p-3 w-[48%] text-xl font-bold text-slate-600 bg-slate-50 border-l border-slate-200 last:rounded-tr-lg">Remark</th>
+                                <th class="p-2 w-[8%] text-xl font-bold text-slate-600 bg-slate-50 text-center border-l border-slate-200">Diff</th> 
+                                <th class="p-2 w-[14%] text-xl font-bold text-slate-600 bg-yellow-50 text-right border-l border-slate-200">New Balance</th>
+                                <th class="p-2 w-[14%] text-xl font-bold text-slate-600 bg-slate-50 text-center border-l border-slate-200">Image</th>
+                                <th class="p-3 w-[40%] text-xl font-bold text-slate-600 bg-slate-50 border-l border-slate-200 last:rounded-tr-lg">Remark</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-100">
@@ -134,6 +135,7 @@
                                 <td class="p-4 font-mono text-slate-800 border-l border-slate-200 text-right" id="totalBase">0.00</td>
                                 <td class="p-4 text-center border-l border-slate-200" id="totalSymbol"></td>
                                 <td class="p-4 font-mono text-slate-800 border-l border-slate-200 bg-yellow-100/50 text-right" id="totalNew">0.00</td>
+                                <td class="border-l border-slate-200 p-4"></td>
                                 <td class="border-l border-slate-200 last:rounded-br-lg p-4" id="totalRemarkStatus"></td>
                             </tr>
                         </tfoot>
@@ -154,15 +156,15 @@
                 </div>
             </div>
             
-            <!-- GHOST TABLE WITH STRICT HEIGHT -->
             <table style="width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed;">
                 <thead>
                     <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1; height: 50px;">
-                        <th style="padding: 12px; font-size: 20px; font-weight: 800; border-right: 1px solid #cbd5e1; width: 12%; color: #475569;">XO</th>
-                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: right; border-right: 1px solid #cbd5e1; width: 15%; color: #475569;">Base Balance</th>
-                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: center; border-right: 1px solid #cbd5e1; width: 10%; color: #475569;"></th>
-                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: right; border-right: 1px solid #cbd5e1; width: 17%; color: #475569;">New Balance</th>
-                        <th style="padding: 12px; font-size: 20px; font-weight: 800; width: 46%; color: #475569;">Remark</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; border-right: 1px solid #cbd5e1; width: 10%; color: #475569;">XO</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: right; border-right: 1px solid #cbd5e1; width: 14%; color: #475569;">Base Balance</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: center; border-right: 1px solid #cbd5e1; width: 8%; color: #475569;"></th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: right; border-right: 1px solid #cbd5e1; width: 14%; color: #475569;">New Balance</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: center; border-right: 1px solid #cbd5e1; width: 14%; color: #475569;">Image</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; width: 40%; color: #475569;">Remark</th>
                     </tr>
                 </thead>
                 <tbody id="ghostBody" style="font-size: 18px;"></tbody>
@@ -273,7 +275,7 @@
                 const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const regex = new RegExp(`${escapedKey}\\s*([\\d,]+\\.\\d{2})`, 'i');
                 const match = text.match(regex);
-                appData.push({ id: index, key: key, baseVal: match ? match[1] : '0.00', newVal: '', remark: '' });
+                appData.push({ id: index, key: key, baseVal: match ? match[1] : '0.00', newVal: '', remark: '', image: '', imgW: 0, imgH: 0 });
             });
 
             recalculateTotalBase(text);
@@ -311,18 +313,51 @@
             }
         }
 
-        // --- IMPROVED FORMATTING HELPER (Handles Negatives) ---
         function formatCurrency(value) {
             if (!value) return '';
-            // Allow minus sign
             let cleanStr = value.toString().replace(/[^0-9.-]/g, '');
             const parts = cleanStr.split('.');
             if (parts.length > 2) cleanStr = parts[0] + '.' + parts.slice(1).join('');
-            
             const num = parseFloat(cleanStr);
             if (isNaN(num)) return '';
             return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
+
+        // --- IMPROVED IMAGE PASTE HANDLER ---
+        window.handleImagePaste = function(e, idx) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.includes('image/')) {
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const base64 = event.target.result;
+                        
+                        // Load image to get true dimensions for PDF aspect ratio
+                        const img = new Image();
+                        img.onload = function() {
+                            appData[idx].image = base64; 
+                            appData[idx].imgW = img.width;
+                            appData[idx].imgH = img.height;
+                            renderTable();
+                        }
+                        img.src = base64;
+                    };
+                    reader.readAsDataURL(blob);
+                    e.preventDefault(); 
+                    return; 
+                }
+            }
+        };
+
+        window.clearImage = function(e, idx) {
+            e.stopPropagation();
+            appData[idx].image = null;
+            appData[idx].imgW = 0;
+            appData[idx].imgH = 0;
+            renderTable();
+        };
 
 		function renderTable() {
             const tableBody = document.getElementById('tableBody');
@@ -343,14 +378,10 @@
                     const diffStr = formatNum(diff);
                     
                     if (diff < 0.01) {
-                        // MATCH
                         inputColorClass = "text-green-700 font-bold";
                         symbolHtml = `<i data-lucide="equal" class="w-8 h-8 text-green-600 mx-auto font-bold stroke-[3]"></i>`;
                     } else {
-                        // DIFF
-                        // Layout: Stacked Icon + Number
                         const diffDisplay = `<span class="text-xs font-bold mt-0.5">${diffStr}</span>`;
-
                         if (nNew < nBase) {
                             inputColorClass = "text-blue-700 font-bold";
                             symbolHtml = `
@@ -371,8 +402,19 @@
                     symbolHtml = `<div class="w-8 h-8 mx-auto"></div>`;
                 }
 
+                // IMAGE HTML LOGIC FOR TABLE CELL
+                const hasImage = row.image;
+                const imgHtml = hasImage 
+                    ? `<div class="relative w-full h-full flex items-center justify-center group">
+                         <img src="${row.image}" class="max-h-[50px] max-w-full object-contain rounded">
+                         <button onclick="clearImage(event, ${idx})" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                       </div>`
+                    : `<div class="w-full h-full border-2 border-dashed border-slate-200 rounded flex items-center justify-center text-slate-300 text-xs cursor-pointer hover:bg-slate-50 hover:border-blue-300 transition-all" tabindex="0" onpaste="handleImagePaste(event, ${idx})" onclick="this.focus()">
+                         <span class="pointer-events-none">Paste</span>
+                       </div>`;
+
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 group transition-colors border-b border-slate-100';
+                tr.className = 'hover:bg-slate-50 group transition-colors border-b border-slate-100 h-[60px]'; // Forced row height
                 
                 tr.innerHTML = `
                     <td class="p-3 font-bold text-slate-700 text-xl break-words">${row.key}</td>
@@ -390,9 +432,14 @@
 							       oninput="this.value = this.value.replace(/[^0-9.,-]/g, ''); updateValue(${idx}, this.value)"
 							       onblur="finalizeInput(${idx}, this.value)">
                     </td>
+
+                    <!-- NEW IMAGE COLUMN -->
+                    <td class="p-1 border-l border-slate-200 h-[60px]">
+                        ${imgHtml}
+                    </td>
                     
                     <td class="p-2 border-l">
-                        <div class="flex items-center bg-slate-50 rounded-lg px-2 border border-transparent focus-within:border-blue-300 focus-within:bg-white transition-colors h-full w-full">
+                        <div class="flex items-center bg-slate-50 rounded-lg px-2 border border-transparent focus-within:border-blue-300 focus-within:bg-white transition-colors h-full w-full gap-3">
                             <input type="text" 
                                    class="flex-1 bg-transparent py-2 outline-none text-lg text-thai-lg text-slate-700 placeholder:text-slate-300 min-w-0"
                                    placeholder="..."
@@ -444,7 +491,7 @@
                  }
             }
             document.getElementById('totalSymbol').innerHTML = totalSymbolHtml;
-            document.getElementById('totalRemarkStatus').innerHTML = ''; // Cleared
+            document.getElementById('totalRemarkStatus').innerHTML = '';
 
             const summaryEl = document.getElementById('summaryStatus');
             if (totalData.new === 0) summaryEl.innerHTML = '-';
@@ -455,7 +502,7 @@
         }
 
         window.finalizeInput = function(idx, val) {
-            if (isPasting) return; // RACE CONDITION FIX
+            if (isPasting) return; 
             const formatted = formatCurrency(val);
             appData[idx].newVal = formatted;
             renderTable();
@@ -465,10 +512,9 @@
             appData[idx].newVal = val;
         };
 
-        // --- IMPROVED SMART PASTE (Logic + Race Condition Fix) ---
         window.handleSmartPaste = function(e, startIndex) {
             e.preventDefault(); 
-            isPasting = true; // Flag on
+            isPasting = true; 
             const text = e.clipboardData.getData('text');
             if (!text) { isPasting = false; return; }
             
@@ -476,7 +522,6 @@
             lines.forEach((line, i) => {
                 const targetIndex = startIndex + i;
                 if (targetIndex < appData.length) {
-                    // Fix: Support Negatives and grab LAST number
                     const matches = line.match(/-?([0-9,]+(\.[0-9]+)?)/g);
                     let cleanVal = '';
                     if (matches && matches.length > 0) {
@@ -487,7 +532,7 @@
                 }
             });
             renderTable();
-            setTimeout(() => { isPasting = false; }, 50); // Flag off
+            setTimeout(() => { isPasting = false; }, 50); 
         };
 
         window.updateRemark = function(idx, val) {
@@ -498,87 +543,117 @@
             location.reload();
         };
 
-        // --- GHOST TABLE GENERATOR (FIXED: Replaced tableData with appData) ---
+        // --- GHOST TABLE GENERATOR ---
+        function updateGhostTable() {
+            const ghostBody = document.getElementById('ghostBody');
+            const ghostTotal = document.getElementById('ghostTotal');
+            ghostBody.innerHTML = '';
 
-function updateGhostTable() {
-    const ghostBody = document.getElementById('ghostBody');
-    const ghostTotal = document.getElementById('ghostTotal');
-    ghostBody.innerHTML = '';
+            document.getElementById('ghostSummaryStatus').innerHTML = document.getElementById('summaryStatus').innerHTML;
 
-    document.getElementById('ghostSummaryStatus').innerHTML = document.getElementById('summaryStatus').innerHTML;
+            // Helper for standard centered content
+            const standardCenter = (content) => `
+                <div style="display: flex; align-items: center; justify-content: center; height: 60px; width: 100%;">
+                    ${content}
+                </div>
+            `;
 
-    appData.forEach(row => {
-        const nBase = parseNum(row.baseVal);
-        const nNew = parseNum(row.newVal);
-        let symbolContent = '';
-        let symbolColor = '';
-        let rowColor = "color: #1e293b;";
+            // Helper for the SPLIT STACK (Symbol)
+            const splitStack = (arrow, diffText) => `
+                <div style="height: 60px; width: 100%; display: block;">
+                    <div style="height: 30px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; box-sizing: border-box;">
+                        <span style="line-height: 1; display: block;">${arrow}</span>
+                    </div>
+                    <div style="height: 30px; display: flex; align-items: flex-start; justify-content: center; padding-top: 2px; box-sizing: border-box;">
+                        <span style="line-height: 1; font-size: 14px; font-weight: bold; display: block;">${diffText}</span>
+                    </div>
+                </div>
+            `;
 
-        if (row.newVal && row.newVal.trim() !== '') {
-            const diff = Math.abs(nBase - nNew);
-            const diffStr = formatNum(diff);
+            // Helper for Text Cells
+            const liftCell = (content, align = 'left') => `
+                <div style="display: flex; align-items: center; justify-content: ${align}; height: 60px; width: 100%; padding-bottom: 4px; box-sizing: border-box;">
+                    ${content}
+                </div>
+            `;
 
-            if (diff < 0.01) {
-                symbolContent = `<span style="margin: 0; padding: 0; line-height: 1;">=</span>`;
-                symbolColor = "color: #15803d;";
-                rowColor = "color: #15803d; font-weight: bold;";
-            } else {
-                const arrow = nNew < nBase ? "&lt;" : "&gt;";
-                symbolContent = `<span style="margin: 0; padding: 0; line-height: 1;">${arrow}</span><span style="margin: 0; padding: 0; line-height: 1; font-size: 14px;">${diffStr}</span>`;
+            // Helper for Image Cell in Ghost Table
+            const imageGhostCell = (imgSrc) => {
+                if (!imgSrc) return '';
+                return `<div style="display: flex; align-items: center; justify-content: center; height: 60px; width: 100%;">
+                            <img src="${imgSrc}" style="max-height: 50px; max-width: 100%; object-fit: contain;">
+                        </div>`;
+            };
 
-                if (nNew < nBase) {
-                    symbolColor = "color: #1d4ed8;";
-                    rowColor = "color: #1d4ed8; font-weight: bold;";
+            appData.forEach(row => {
+                const nBase = parseNum(row.baseVal);
+                const nNew = parseNum(row.newVal);
+                let symbolContent = '';
+                let symbolColor = 'color: #64748b;';
+                let rowColor = 'color: #1e293b;';
+
+                if (row.newVal && row.newVal.trim() !== '') {
+                    const diff = Math.abs(nBase - nNew);
+                    const diffStr = formatNum(diff);
+
+                    if (diff < 0.01) {
+                        symbolContent = standardCenter('<span style="display: block; line-height: 1;">=</span>');
+                        symbolColor = 'color: #15803d;';
+                        rowColor = 'color: #15803d; font-weight: bold;';
+                    } else {
+                        const arrow = nNew < nBase ? '&lt;' : '&gt;';
+                        symbolContent = splitStack(arrow, diffStr);
+
+                        if (nNew < nBase) {
+                            symbolColor = 'color: #1d4ed8;';
+                            rowColor = 'color: #1d4ed8; font-weight: bold;';
+                        } else {
+                            symbolColor = 'color: #dc2626;';
+                            rowColor = 'color: #dc2626; font-weight: bold;';
+                        }
+                    }
+                }
+
+                const tr = document.createElement('tr');
+                tr.style.height = "60px"; 
+                tr.style.borderBottom = '1px solid #e2e8f0';
+                
+                tr.innerHTML = `
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px;">${liftCell(row.key)}</td>
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px; font-family: monospace;">${liftCell(row.baseVal, 'flex-end')}</td>
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0; height: 60px; font-size: 24px; font-weight: 900; line-height: 1; ${symbolColor}">${symbolContent}</td>
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px; font-family: monospace; ${rowColor}">${liftCell(row.newVal, 'flex-end')}</td>
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0 6px; height: 60px;">${imageGhostCell(row.image)}</td>
+                    <td style="padding: 0 12px; height: 60px;">${liftCell(row.remark)}</td>
+                `;
+                ghostBody.appendChild(tr);
+            });
+
+            // GHOST FOOTER
+            const diffTotal = Math.abs(totalData.base - totalData.new);
+            let tSym = '';
+            let tColor = 'color: #64748b;';
+            
+            if (totalData.new > 0 || appData.some(r => r.newVal)) {
+                if (diffTotal < 0.01) {
+                    tSym = standardCenter('<span style="display: block; line-height: 1;">=</span>');
+                    tColor = 'color: #15803d;';
                 } else {
-                    symbolColor = "color: #dc2626;";
-                    rowColor = "color: #dc2626; font-weight: bold;";
+                    const arrow = totalData.new < totalData.base ? '&lt;' : '&gt;';
+                    tSym = splitStack(arrow, formatNum(diffTotal));
+                    tColor = totalData.new < totalData.base ? 'color: #1d4ed8;' : 'color: #dc2626;';
                 }
             }
+
+            ghostTotal.innerHTML = `
+                <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px;">${liftCell('TOTAL')}</td>
+                <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px; font-family: monospace;">${liftCell(formatNum(totalData.base), 'flex-end')}</td>
+                <td style="border-right: 1px solid #cbd5e1; padding: 0; height: 60px; font-size: 24px; font-weight: 900; line-height: 1; ${tColor}">${tSym}</td>
+                <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px; font-family: monospace; ${tColor}">${liftCell(formatNum(totalData.new), 'flex-end')}</td>
+                <td style="border-right: 1px solid #cbd5e1; padding: 0; height: 60px;"></td>
+                <td style="height: 60px;"></td>
+            `;
         }
-
-        const tr = document.createElement('tr');
-        tr.style.height = "60px";
-        tr.style.borderBottom = "1px solid #e2e8f0";
-        
-        tr.innerHTML = `
-            <td style="height: 60px; border-right: 1px solid #cbd5e1; padding: 12px; vertical-align: middle;">${row.key}</td>
-            <td style="height: 60px; border-right: 1px solid #cbd5e1; padding: 12px; vertical-align: middle; text-align: right; font-family: monospace;">${row.baseVal}</td>
-            <td style="height: 60px; border-right: 1px solid #cbd5e1; padding: 0; text-align: center; font-size: 24px; font-weight: 900; ${symbolColor}">
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60px; margin: 0; padding: 0; gap: 2px;">${symbolContent}</div>
-            </td>
-            <td style="height: 60px; border-right: 1px solid #cbd5e1; padding: 12px; vertical-align: middle; text-align: right; font-family: monospace; ${rowColor}">${row.newVal}</td>
-            <td style="height: 60px; word-wrap: break-word; padding: 12px; vertical-align: middle;">${row.remark}</td>
-        `;
-        ghostBody.appendChild(tr);
-    });
-
-    // GHOST FOOTER
-    const diffTotal = Math.abs(totalData.base - totalData.new);
-    let tSym = '';
-    let tColor = "color: #1e293b;";
-    
-    if (totalData.new > 0 || appData.some(r => r.newVal)) {
-        if (diffTotal < 0.01) {
-            tSym = `<span style="margin: 0; padding: 0; line-height: 1;">=</span>`;
-            tColor = "color: #15803d;";
-        } else {
-            const arrow = totalData.new < totalData.base ? "&lt;" : "&gt;";
-            tSym = `<span style="margin: 0; padding: 0; line-height: 1;">${arrow}</span><span style="margin: 0; padding: 0; line-height: 1; font-size: 14px;">${formatNum(diffTotal)}</span>`;
-            tColor = totalData.new < totalData.base ? "color: #1d4ed8;" : "color: #dc2626;";
-        }
-    }
-
-    ghostTotal.innerHTML = `
-        <td style="height: 60px; border-right: 1px solid #cbd5e1; padding: 12px; vertical-align: middle;">TOTAL</td>
-        <td style="height: 60px; border-right: 1px solid #cbd5e1; padding: 12px; vertical-align: middle; text-align: right; font-family: monospace;">${formatNum(totalData.base)}</td>
-        <td style="height: 60px; border-right: 1px solid #cbd5e1; padding: 0; text-align: center; font-size: 24px; font-weight: 900; ${tColor}">
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60px; margin: 0; padding: 0; gap: 2px;">${tSym}</div>
-        </td>
-        <td style="height: 60px; border-right: 1px solid #cbd5e1; padding: 12px; vertical-align: middle; text-align: right; font-family: monospace; ${tColor}">${formatNum(totalData.new)}</td>
-        <td style="height: 60px;"></td>
-    `;
-}
-
 
         window.copyCleanReport = async function() {
             const btn = document.getElementById('btnCopyImg');
@@ -619,7 +694,7 @@ function updateGhostTable() {
             }
         };
 
-        // --- EXPORT: PDF (UNCHANGED as user is happy) ---
+        // --- EXPORT: PDF ---
         window.exportTextPDF = async function() {
             const btn = document.getElementById('btnExportPdf');
             const originalText = btn.innerHTML;
@@ -663,8 +738,7 @@ function updateGhostTable() {
                     const nBase = parseNum(r.baseVal);
                     const nNew = parseNum(r.newVal);
                     let sym = '';
-                    let remarkText = r.remark;
-
+                    
                     if (r.newVal && r.newVal.trim() !== '') {
                         const diff = Math.abs(nBase - nNew);
                         if (diff < 0.01) {
@@ -674,7 +748,7 @@ function updateGhostTable() {
                             sym = `${arrow}\n${formatNum(diff)}`;
                         }
                     }
-                    return [r.key, r.baseVal, sym, r.newVal, remarkText];
+                    return [r.key, r.baseVal, sym, r.newVal, '', r.remark]; // Empty string for image col
                 });
                 
                 let totalSym = '';
@@ -687,10 +761,10 @@ function updateGhostTable() {
                          totalSym = `${arrow}\n${formatNum(diffTotal)}`;
                      }
                 }
-                body.push(['TOTAL', formatNum(totalData.base), totalSym, formatNum(totalData.new), '']);
+                body.push(['TOTAL', formatNum(totalData.base), totalSym, formatNum(totalData.new), '', '']);
 
                 doc.autoTable({
-                    head: [['XO', 'Base', 'Diff', 'New', 'Remark']], 
+                    head: [['XO', 'Base', 'Diff', 'New', 'Image', 'Remark']], 
                     body: body,
                     startY: 35,
                     theme: 'grid',
@@ -703,18 +777,57 @@ function updateGhostTable() {
                         lineWidth: 0.1, 
                         lineColor: [203, 213, 225]
                     },
-                    columnStyles: {
-                        0: { cellWidth: 25, fontStyle: 'bold' }, 
-                        1: { cellWidth: 30, halign: 'right' },
-                        2: { cellWidth: 15, halign: 'center', fontStyle: 'bold', fontSize: 14 },
-                        3: { cellWidth: 30, halign: 'right' },
-                        4: { cellWidth: 'auto' }
-                    },
+					
+					columnStyles: {
+						0: { cellWidth: 25, fontStyle: 'bold' },  // XO
+						1: { cellWidth: 30, halign: 'right' },    // Base
+						2: { cellWidth: 15, halign: 'center', fontStyle: 'bold', fontSize: 14 }, // Diff
+						3: { cellWidth: 30, halign: 'right' },    // New
+						4: { cellWidth: 30, minCellHeight: 15 },  // Image - SAME WIDTH AS NEW (30)
+						5: { cellWidth: 'auto' }                   // Remark
+					},
+
+					didDrawCell: function(data) {
+						if (data.column.index === 4 && data.section === 'body') {
+							const row = appData[data.row.index];
+							if (row && row.image) {
+								const imgData = row.image;
+								const cell = data.cell;
+								
+								// Create temporary image to get dimensions
+								const img = new Image();
+								img.src = imgData;
+								
+								// Max width is cell width minus padding
+								const maxWidth = cell.width - 4; // 2px padding on each side
+								const maxHeight = cell.height - 4;
+								
+								// Calculate dimensions maintaining aspect ratio
+								// Fit to width first (since landscape)
+								let imgWidth = maxWidth;
+								let imgHeight = (img.height / img.width) * maxWidth;
+								
+								// If height exceeds cell, scale down
+								if (imgHeight > maxHeight) {
+									imgHeight = maxHeight;
+									imgWidth = (img.width / img.height) * maxHeight;
+								}
+								
+								// Center the image in the cell
+								const x = cell.x + (cell.width - imgWidth) / 2;
+								const y = cell.y + (cell.height - imgHeight) / 2;
+								
+								doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+							}
+						}
+					},
+
+
+
                     didParseCell: (data) => {
-                        // Color logic for PDF
                         if (data.section === 'body') {
                              const row = appData[data.row.index];
-                             
+                             // Font size reduction for Diff and Total
                              if (data.column.index === 2) {
                                  data.cell.styles.fontSize = 8; 
                              }
@@ -730,7 +843,7 @@ function updateGhostTable() {
                                      else data.cell.styles.textColor = [220, 38, 38]; 
                                  }
                              }
-                             // Handle Total Row Coloring
+                             // Handle Total Row
                              if (data.row.index === appData.length) {
                                  const diffTotal = Math.abs(totalData.base - totalData.new);
                                  if (data.column.index === 2) {
