@@ -9,7 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&display=swap');
         body { font-family: 'Sarabun', sans-serif; }
@@ -324,32 +325,61 @@
         }
 
         // --- IMPROVED IMAGE PASTE HANDLER ---
-        window.handleImagePaste = function(e, idx) {
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            for (let index in items) {
-                const item = items[index];
-                if (item.kind === 'file' && item.type.includes('image/')) {
-                    const blob = item.getAsFile();
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const base64 = event.target.result;
-                        
-                        // Load image to get true dimensions for PDF aspect ratio
-                        const img = new Image();
-                        img.onload = function() {
-                            appData[idx].image = base64; 
-                            appData[idx].imgW = img.width;
-                            appData[idx].imgH = img.height;
-                            renderTable();
+window.handleImagePaste = async function(e, idx) {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    
+    for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const blob = item.getAsFile();
+            const reader = new FileReader();
+            
+            reader.onload = async function(event) {
+                appData[idx].image = event.target.result;
+                renderTable();
+                showToast('Image pasted! Reading numbers...', 'info');
+                
+                // Run OCR on the image
+                try {
+                    const result = await Tesseract.recognize(
+                        event.target.result,
+                        'eng',
+                        {
+                            logger: m => console.log(m) // Optional: show progress in console
                         }
-                        img.src = base64;
-                    };
-                    reader.readAsDataURL(blob);
-                    e.preventDefault(); 
-                    return; 
+                    );
+                    
+                    const text = result.data.text;
+                    console.log('OCR Result:', text);
+                    
+                    // Extract numbers (with decimals and commas)
+                    const numbers = text.match(/[\d,]+\.?\d*/g);
+                    
+                    if (numbers && numbers.length > 0) {
+                        // Take the last/largest number found (customize as needed)
+                        const lastNumber = numbers[numbers.length - 1];
+                        const cleanNumber = lastNumber.replace(/,/g, '');
+                        
+                        // Auto-fill the New Balance
+                        appData[idx].newVal = formatCurrency(cleanNumber);
+                        renderTable();
+                        showToast(`Number detected: ${formatCurrency(cleanNumber)}`);
+                    } else {
+                        showToast('No numbers found in image', 'warning');
+                    }
+                    
+                } catch (err) {
+                    console.error('OCR Error:', err);
+                    showToast('Could not read image', 'error');
                 }
-            }
-        };
+            };
+            
+            reader.readAsDataURL(blob);
+            break;
+        }
+    }
+};
+
 
         window.clearImage = function(e, idx) {
             e.stopPropagation();
