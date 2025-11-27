@@ -47,7 +47,7 @@
                 
                 <div class="flex-1 flex flex-col gap-4 overflow-hidden">
                     <!-- Paste Area -->
-                    <div id="modalPasteArea" class="shrink-0 h-[120px] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-blue-400 hover:shadow-md transition-all group bg-slate-100" tabindex="0">
+					<div id="modalPasteArea" contenteditable="true" class="shrink-0 h-[120px] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-blue-400 hover:shadow-md transition-all group bg-slate-100 caret-transparent outline-none">
                         <div class="text-center pointer-events-none group-hover:scale-105 transition-transform">
                             <i data-lucide="copy-plus" class="w-8 h-8 text-slate-400 mx-auto mb-1 group-hover:text-blue-500"></i>
                             <p class="text-slate-500 font-bold">คลิก-วาง ตรงนี้ (Ctrl+V)</p>
@@ -592,14 +592,14 @@
 
                 // IMAGE HTML LOGIC FOR TABLE CELL
                 const hasImage = row.image;
-                const imgHtml = hasImage 
-                    ? `<div class="relative w-full h-full flex items-center justify-center group">
-                         <img src="${row.image}" class="max-h-[50px] max-w-full object-contain rounded">
-                         <button onclick="clearImage(event, ${idx})" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-                       </div>`
-                    : `<div class="w-full h-full border-2 border-dashed border-slate-200 rounded flex items-center justify-center text-slate-300 text-xs cursor-pointer hover:bg-slate-50 hover:border-blue-300 transition-all" tabindex="0" onpaste="handleImagePaste(event, ${idx})" onclick="this.focus()">
-                         <span class="pointer-events-none">แคป - วาง</span>
-                       </div>`;
+				const imgHtml = hasImage 
+					? `<div class="relative w-full h-full flex items-center justify-center group">
+						 <img src="${row.image}" class="max-h-[50px] max-w-full object-contain rounded">
+						 <button onclick="clearImage(event, ${idx})" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+					   </div>`
+					: `<div contenteditable="true" class="w-full h-full border-2 border-dashed border-slate-200 rounded flex items-center justify-center text-slate-300 text-xs cursor-pointer hover:bg-slate-50 hover:border-blue-300 transition-all caret-transparent outline-none" onpaste="handleImagePaste(event, ${idx})" onclick="this.focus()">
+						 <span class="pointer-events-none">แคป - วาง</span>
+					   </div>`;
 
                 // Transaction Icon Logic (Multiple Images)
                 const hasTrans = row.transactionImages && row.transactionImages.length > 0;
