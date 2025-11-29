@@ -570,7 +570,7 @@
                         symbolHtml = `<i data-lucide="equal" class="w-8 h-8 text-green-600 mx-auto font-bold stroke-[3]"></i>`;
                     } else {
                         const diffDisplay = `<span class="text-xs font-bold mt-0.5">${diffStr}</span>`;
-                        if (nNew < nBase) {
+                        if (nNew > nBase) {
                             inputColorClass = "text-blue-700 font-bold";
                             symbolHtml = `
                                 <div class="flex flex-col items-center leading-none text-blue-600">
