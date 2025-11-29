@@ -930,7 +930,7 @@
                         if (diff < 0.01) {
                             sym = '=';
                         } else {
-                            const arrow = nNew < nBase ? '<' : '>';
+                            const arrow = nNew < nBase ? '>' : '<';
                             sym = `${arrow}\n${formatNum(diff)}`;
                         }
                     }
@@ -966,7 +966,7 @@
                     columnStyles: {
                         0: { cellWidth: 25, fontStyle: 'bold' }, 
                         1: { cellWidth: 28, halign: 'right' }, 
-                        2: { cellWidth: 17, halign: 'center', fontStyle: 'bold', fontSize: 14 }, 
+                        2: { cellWidth: 17, halign: 'center', fontStyle: 'bold', fontSize: 16 }, 
                         3: { cellWidth: 28, halign: 'right' }, 
                         4: { cellWidth: 28, minCellHeight: 15, halign: 'center' }, 
                         5: { cellWidth: 'auto' }
