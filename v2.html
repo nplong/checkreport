@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เช็กยอดกันเถอะ กลับบ้านกันเถอะ v31</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400..800&display=swap');
+        body { font-family: 'Sarabun', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Bigger Thai Text Overrides */
+        .text-thai-lg { font-size: 1.15rem; line-height: 1.6; }
+        
+        input { font-size: 1.15rem; }
+        th { font-weight: 800 !important; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 h-screen flex flex-col overflow-hidden" onload="initApp()">
+
+    <!-- TRANSACTION IMAGE MODAL (MULTIPLE SUPPORT) -->
+    <div id="transModal" class="fixed inset-0 z-[60] bg-black/50 hidden flex items-center justify-center backdrop-blur-sm fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl w-[800px] flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-slate-800">Transaction Log (Screenshots)</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <i data-lucide="x" class="w-8 h-8"></i>
+                </button>
+            </div>
+            <div class="p-6 flex-1 bg-slate-50 flex flex-col gap-4 overflow-hidden">
+                <p class="text-slate-500 font-bold" id="modalTitle">Details for XO</p>
+                
+                <div class="flex-1 flex flex-col gap-4 overflow-hidden">
+                    <!-- Paste Area -->
+					<div id="modalPasteArea" contenteditable="true" class="shrink-0 h-[120px] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-blue-400 hover:shadow-md transition-all group bg-slate-100 caret-transparent outline-none">
+                        <div class="text-center pointer-events-none group-hover:scale-105 transition-transform">
+                            <i data-lucide="copy-plus" class="w-8 h-8 text-slate-400 mx-auto mb-1 group-hover:text-blue-500"></i>
+                            <p class="text-slate-500 font-bold">คลิก-วาง ตรงนี้ (Ctrl+V)</p>
+                        </div>
+                    </div>
+
+                    <!-- Gallery of Pasted Images -->
+                    <div id="modalGallery" class="flex-1 overflow-y-auto p-2 grid grid-cols-2 gap-4 auto-rows-min content-start">
+                        <!-- Images will be injected here -->
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 flex justify-end gap-2">
+                <button onclick="closeModal()" class="px-6 py-2 rounded-xl text-slate-600 font-bold hover:bg-slate-100">Cancel</button>
+                <button onclick="saveModal()" class="px-6 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg shadow-blue-200">Save Logs</button>
+            </div>
+        </div>
+    </div>
+
+	<div id="loginStep" class="fixed inset-0 z-50 bg-slate-200 flex items-center justify-center">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl w-96 text-center border-4 border-white">
+            <div class="bg-blue-600 text-white w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg transform rotate-3">
+                <i data-lucide="lock" class="w-10 h-10"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">ใส่รหัสก่อนจ้าาาา</h2>
+            <p class="text-slate-500 mb-8 text-base">รหัสที่เราคุ้นเคย</p>
+            
+            <div class="relative">
+                <input type="password" id="passInput" 
+                       class="w-full px-6 py-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none text-center text-xl tracking-widest mb-4 transition-all placeholder:tracking-normal"
+                       placeholder="Passcode"
+                       onkeyup="if(event.key === 'Enter') checkLogin()">
+            </div>
+                   
+            <button onclick="checkLogin()" class="w-full bg-slate-900 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-xl shadow-slate-200 transform active:scale-95 flex items-center justify-center gap-2">
+                Login <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+            
+            <p id="loginError" class="text-red-500 text-sm mt-4 hidden font-bold bg-red-50 p-2 rounded-lg border border-red-100 animate-pulse">
+                <i data-lucide="alert-triangle" class="w-4 h-4 inline mr-1"></i> Incorrect Passcode
+            </p>
+        </div>
+    </div>
+	
+    <!-- Toast Container REMOVED as requested -->
+    <!-- <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div> -->
+
+    <main class="flex-1 overflow-hidden relative">
+        
+        <div id="step1" class="absolute inset-0 flex items-center justify-center p-8 fade-in z-20 bg-slate-100">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-10 w-full max-w-4xl flex flex-col gap-6">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Copy-paste ยอด Top-up Balance มาวางตรงนี้</h2>
+                    <p class="text-slate-500 text-lg">
+                        ลากดำตั้งแต่เลข 1 จนถึงยอดรวม - Ctrt C แล้วมาวางลงในกล่องด้านล่างได้เลย
+                    </p>
+                </div>
+                
+                <textarea id="rawInput" class="w-full h-64 p-6 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none font-mono text-base transition-all shadow-inner" 
+                          placeholder="วางข้อความที่นี่..."
+                          onpaste="handleAutoProcess(event)"></textarea>
+            </div>
+        </div>
+
+        <div id="step2" class="absolute inset-0 flex flex-col p-6 hidden fade-in bg-slate-100">
+            
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-center items-center gap-4 mb-4 shrink-0 overflow-x-auto">
+                
+                <button onclick="resetAll()" class="px-5 py-2 text-base font-bold text-red-600 hover:bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 transition-colors whitespace-nowrap">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i> เริ่มใหม่
+                </button>
+
+                <!-- UPDATE BASE BUTTON WITH ANIMATION -->
+                <button id="btnUpdateBase" onclick="pasteBaseDataOnly()" class="px-5 py-2 text-base font-bold text-yellow-700 hover:bg-yellow-50 border border-yellow-300 bg-yellow-50/50 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap" title="คลิกแก้ยอด XO (ก๊อปปี้และวางใหม่)">
+                    <i data-lucide="clipboard-paste" class="w-5 h-5 transition-transform duration-300"></i> <span>แก้ไขยอด XO</span>
+                </button>
+                
+                <div class="w-px h-10 bg-slate-200 mx-2"></div>
+                
+                <!-- Copy Image Button Hidden -->
+                <button id="btnCopyImg" onclick="copyCleanReport()" class="px-6 py-2 text-base font-bold text-slate-700 hover:bg-slate-50 border border-slate-300 rounded-xl shadow-sm flex items-center gap-2 transition-all min-w-[160px] justify-center hidden">
+                    <i data-lucide="image" class="w-5 h-5 text-purple-600"></i> <span>Copy Image</span>
+                </button>
+
+                <button id="btnExportPdf" onclick="exportTextPDF()" class="px-6 py-2 text-base font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl shadow-md shadow-green-100 flex items-center gap-2 transition-colors min-w-[160px] justify-center">
+                    <i data-lucide="file-down" class="w-5 h-5"></i> <span>ดาวโหลดไฟล์ PDF</span>
+                </button>
+            </div>
+
+            <div id="tableContainer" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-auto relative">
+                <div class="p-6 bg-white min-w-[1000px]"> 
+                    
+                    <div class="flex justify-between items-end mb-4 border-b-2 border-slate-100 pb-2">
+                        <div>
+                            <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Check Report</h2>
+                            <p class="text-slate-400 text-base mt-1" id="reportDate">Date: -</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-bold text-slate-500 uppercase tracking-wider">SUMMARY</div>
+                            <div id="summaryStatus" class="text-xl font-bold">-</div>
+                        </div>
+                    </div>
+
+                    <table class="w-full text-left border-collapse table-fixed">
+                        <thead>
+                            <tr class="border-b-2 border-slate-200">
+                                <th class="p-3 w-[10%] text-xl font-bold text-slate-600 bg-slate-50 first:rounded-tl-lg">XO</th>
+                                <th class="p-3 w-[14%] text-xl font-bold text-slate-600 bg-slate-50 text-right border-l border-slate-200">ยอดในบัญชี</th>
+                                <th class="p-2 w-[8%] text-xl font-bold text-slate-600 bg-slate-50 text-center border-l border-slate-200">*</th> 
+                                <th class="p-2 w-[14%] text-xl font-bold text-slate-600 bg-yellow-50 text-right border-l border-slate-200">ยอดสายการบิน</th>
+                                <th class="p-2 w-[14%] text-xl font-bold text-slate-600 bg-slate-50 text-center border-l border-slate-200">แคปยอด</th>
+                                <th class="p-3 w-[40%] text-xl font-bold text-slate-600 bg-slate-50 border-l border-slate-200 last:rounded-tr-lg">รายละเอียดออกตั๋ว - หมายเหตุ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-100">
+                            </tbody>
+                        <tfoot class="bg-slate-50 font-bold border-t-4 border-slate-200 text-xl">
+                            <tr id="totalRow">
+                                <td class="p-4 text-slate-800">ยอดรวม</td>
+                                <td class="p-4 font-mono text-slate-800 border-l border-slate-200 text-right" id="totalBase">0.00</td>
+                                <td class="p-4 text-center border-l border-slate-200" id="totalSymbol"></td>
+                                <td class="p-4 font-mono text-slate-800 border-l border-slate-200 bg-yellow-100/50 text-right" id="totalNew">0.00</td>
+                                <td class="border-l border-slate-200 p-4"></td>
+                                <td class="border-l border-slate-200 last:rounded-br-lg p-4" id="totalRemarkStatus"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="ghostReport" style="position: absolute; left: -9999px; top: 0; width: 1200px; background-color: white; padding: 40px; z-index: -50;">
+             <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h2 style="font-size: 36px; font-weight: bold; color: #1e293b;">Check Report</h2>
+                    <p style="color: #64748b; font-size: 18px; margin-top: 8px;" id="ghostDate">Date: -</p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 16px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">SUMMARY</div>
+                    <div id="ghostSummaryStatus" style="font-size: 24px; font-weight: bold;">-</div>
+                </div>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed;">
+                <thead>
+                    <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1; height: 50px;">
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; border-right: 1px solid #cbd5e1; width: 10%; color: #475569;">XO</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: right; border-right: 1px solid #cbd5e1; width: 14%; color: #475569;">Base Balance</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: center; border-right: 1px solid #cbd5e1; width: 8%; color: #475569;"></th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: right; border-right: 1px solid #cbd5e1; width: 14%; color: #475569;">New Balance</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; text-align: center; border-right: 1px solid #cbd5e1; width: 14%; color: #475569;">Image</th>
+                        <th style="padding: 12px; font-size: 20px; font-weight: 800; width: 40%; color: #475569;">Remark</th>
+                    </tr>
+                </thead>
+                <tbody id="ghostBody" style="font-size: 18px;"></tbody>
+                <tfoot style="background-color: #f1f5f9; font-weight: bold; border-top: 4px solid #cbd5e1; font-size: 20px;">
+                    <tr id="ghostTotal" style="height: 60px;"></tr>
+                </tfoot>
+            </table>
+
+            <!-- GHOST DETAIL SECTION (IMAGES) -->
+            <div id="ghostDetailsContainer" style="margin-top: 60px; display: none;">
+                <div style="background-color: #e2e8f0; padding: 15px 20px; font-size: 24px; font-weight: 900; color: #334155; margin-bottom: 20px; border-left: 8px solid #3b82f6;">
+                    TRANSACTION EVIDENCE
+                </div>
+                <div id="ghostDetailsBody" style="display: flex; flex-direction: column; gap: 30px;"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+		// --- SECURE AUTHENTICATION ---
+		const SESSION_KEY = 'dm_session_v1'; 
+        const SESSION_DURATION = 12 * 60 * 60 * 1000; 
+
+        function initApp() {
+            const savedTime = localStorage.getItem(SESSION_KEY);
+            const currentTime = new Date().getTime();
+
+            if (savedTime && (currentTime < parseInt(savedTime))) {
+                document.getElementById('loginStep').classList.add('hidden');
+				
+				loadFromLocal();
+				
+                setTimeout(() => {
+                    const rawInput = document.getElementById('rawInput');
+                    if (rawInput) rawInput.focus();
+                }, 100);
+            } 
+        }
+		
+		const AUTOSAVE_KEY = 'dm_autosave_v1';
+
+		// 1. Save Function: Snapshots your current data to browser memory
+		function saveToLocal() {
+			if (appData.length > 0) {
+				const packet = {
+					appData: appData,
+					totalData: totalData
+				};
+				localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(packet));
+			}
+		}
+
+		// 2. Load Function: Checks memory and restores the table if data exists
+		function loadFromLocal() {
+			const raw = localStorage.getItem(AUTOSAVE_KEY);
+			if (raw) {
+				try {
+					const data = JSON.parse(raw);
+					if (data && data.appData && data.appData.length > 0) {
+						appData = data.appData;
+						totalData = data.totalData || { base: 0, new: 0 };
+						
+						// Switch UI to Step 2 automatically
+						document.getElementById('step1').classList.add('hidden');
+						document.getElementById('step2').classList.remove('hidden');
+						renderTable(); // Re-draw the table with recovered data
+					}
+				} catch (e) {
+					console.error("Failed to load auto-save", e);
+				}
+			}
+}
+		
+		async function checkLogin() {
+	        const pass = document.getElementById('passInput').value;
+	        const msgBuffer = new TextEncoder().encode(pass);
+	        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+	        const hashArray = Array.from(new Uint8Array(hashBuffer));
+	        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+	        
+	        if (hashHex === "2b81bcbe5c18872568784199ca8f825592945d0f3a3dbfedfd5af1fa5e57b698") {
+                const expiryTime = new Date().getTime() + SESSION_DURATION;
+                localStorage.setItem(SESSION_KEY, expiryTime);
+	            document.getElementById('loginStep').classList.add('hidden');
+				loadFromLocal();
+	            document.getElementById('rawInput').focus();
+			} else {
+                const err = document.getElementById('loginError');
+                const inp = document.getElementById('passInput');
+                if(err) err.classList.remove('hidden');
+                if(inp) {
+                    inp.classList.add('border-red-500', 'bg-red-50');
+                    inp.value = '';
+                    setTimeout(() => {
+                        inp.classList.remove('border-red-500', 'bg-red-50');
+                    }, 2000);
+                }
+	    	}
+		}
+
+        lucide.createIcons();
+        const dateStr = `Date: ${new Date().toLocaleString('th-TH')}`;
+        document.getElementById('reportDate').innerText = dateStr;
+        document.getElementById('ghostDate').innerText = dateStr;
+
+        const KEYS = [
+            "FDAG", "FDGO", "GM", "Indigo (6E)", "NokCorp", "NokGov", 
+            "NokSmile", "SL", "TG", "VZ", "VZGov", "WE"
+        ];
+
+        let appData = [];
+        let totalData = { base: 0.00, new: 0.00 };
+        let isPasting = false; // Flag to prevent race condition
+        let currentEditIndex = -1; 
+        let tempTransactionImages = []; 
+
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const rawInput = document.getElementById('rawInput');
+
+        // --- HELPER: TRIGGER ANIMATION ON BUTTON ---
+        function triggerButtonAnimation(btnId, text) {
+            const btn = document.getElementById(btnId);
+            const originalHTML = btn.innerHTML;
+            
+            // Change content
+            btn.innerHTML = `<i data-lucide="check" class="w-5 h-5 text-green-600"></i> <span>${text}</span>`;
+            btn.classList.add('bg-green-50', 'border-green-300', 'text-green-700');
+            btn.classList.remove('bg-yellow-50/50', 'border-yellow-300', 'text-yellow-700'); // Specific to update base btn
+            
+            lucide.createIcons();
+
+            // Revert after delay
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-green-50', 'border-green-300', 'text-green-700');
+                // Restore original classes if needed (simplified reset here)
+                btn.classList.add('bg-yellow-50/50', 'border-yellow-300', 'text-yellow-700'); 
+                lucide.createIcons();
+            }, 2000);
+        }
+
+        function parseNum(val) {
+            if (!val) return 0.00;
+            return parseFloat(val.toString().replace(/,/g, ''));
+        }
+
+        function formatNum(num) {
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // --- CORE LOGIC ---
+        function handleAutoProcess(e) {
+            setTimeout(() => {
+                if (rawInput.value.trim()) {
+                    processRawData();
+                }
+            }, 50);
+        }
+
+        function processRawData() {
+            const text = rawInput.value.trim();
+            if (!text) return;
+            appData = [];
+            
+            KEYS.forEach((key, index) => {
+                const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`${escapedKey}\\s*([\\d,]+\\.\\d{2})`, 'i');
+                const match = text.match(regex);
+                appData.push({ id: index, key: key, baseVal: match ? match[1] : '0.00', newVal: '', remark: '', image: '', imgW: 0, imgH: 0, transactionImages: [] });
+            });
+
+            recalculateTotalBase(text);
+            renderTable();
+            step1.classList.add('hidden');
+            step2.classList.remove('hidden');
+        }
+        
+        function recalculateTotalBase(text) {
+             const allNumbers = text.match(/([\d,]+\.\d{2})/g);
+             totalData.base = parseNum(allNumbers ? allNumbers[allNumbers.length - 1] : '0.00');
+        }
+
+        async function pasteBaseDataOnly() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (!text || !text.trim()) {
+                    return; // Silent fail or visual shake could be added
+                }
+                KEYS.forEach((key, index) => {
+                    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`${escapedKey}\\s*([\\d,]+\\.\\d{2})`, 'i');
+                    const match = text.match(regex);
+                    if (match && appData[index]) {
+                        appData[index].baseVal = match[1];
+                    }
+                });
+                recalculateTotalBase(text);
+                renderTable();
+                // TRIGGER ANIMATION INSTEAD OF TOAST
+                triggerButtonAnimation('btnUpdateBase', 'Updated!');
+                
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function formatCurrency(value) {
+            if (!value) return '';
+            let cleanStr = value.toString().replace(/[^0-9.-]/g, '');
+            const parts = cleanStr.split('.');
+            if (parts.length > 2) cleanStr = parts[0] + '.' + parts.slice(1).join('');
+            const num = parseFloat(cleanStr);
+            if (isNaN(num)) return '';
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // --- MODAL LOGIC ---
+        window.openTransactionModal = function(idx) {
+            currentEditIndex = idx;
+            const row = appData[idx];
+            document.getElementById('modalTitle').innerText = `Details for ${row.key}`;
+            
+            // Clone array to temp to allow cancel
+            tempTransactionImages = row.transactionImages ? [...row.transactionImages] : [];
+            renderModalGallery();
+
+            document.getElementById('transModal').classList.remove('hidden');
+            document.getElementById('modalPasteArea').focus();
+            
+            // Attach Paste Event
+            const pasteArea = document.getElementById('modalPasteArea');
+            pasteArea.onpaste = handleModalPaste;
+        }
+
+        window.handleModalPaste = function(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        tempTransactionImages.push(event.target.result); // Add to array
+                        renderModalGallery();
+                    };
+                    reader.readAsDataURL(blob);
+                    break;
+                }
+            }
+        };
+
+        window.renderModalGallery = function() {
+            const gallery = document.getElementById('modalGallery');
+            gallery.innerHTML = '';
+            tempTransactionImages.forEach((imgSrc, i) => {
+                const thumb = document.createElement('div');
+                thumb.className = 'relative border border-slate-200 rounded-lg overflow-hidden h-32 group bg-white shadow-sm';
+                thumb.innerHTML = `
+                    <img src="${imgSrc}" class="w-full h-full object-contain">
+                    <button onclick="removeTempImage(${i})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md hover:bg-red-600">×</button>
+                `;
+                gallery.appendChild(thumb);
+            });
+        }
+
+        window.removeTempImage = function(index) {
+            tempTransactionImages.splice(index, 1);
+            renderModalGallery();
+        }
+
+        window.closeModal = function() {
+            document.getElementById('transModal').classList.add('hidden');
+            currentEditIndex = -1;
+            tempTransactionImages = [];
+        }
+
+        window.saveModal = function() {
+            if (currentEditIndex > -1) {
+                appData[currentEditIndex].transactionImages = [...tempTransactionImages];
+                renderTable();
+                closeModal();
+                // No Toast
+            }
+        }
+
+        // --- IMPROVED IMAGE PASTE HANDLER ---
+        window.handleImagePaste = async function(e, idx) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = async function(event) {
+                        const base64 = event.target.result;
+                        
+                        // Load image to get true dimensions for PDF aspect ratio
+                        const img = new Image();
+                        img.onload = function() {
+                            appData[idx].image = base64; 
+                            appData[idx].imgW = img.width;
+                            appData[idx].imgH = img.height;
+                            renderTable();
+                        }
+                        img.src = base64;
+
+                        // OCR Removed toast
+                        try {
+                            const result = await Tesseract.recognize(
+                                event.target.result,
+                                'eng'
+                            );
+                            
+                            const text = result.data.text;
+                            const numbers = text.match(/[\d,]+\.?\d*/g);
+                            
+                            if (numbers && numbers.length > 0) {
+                                const lastNumber = numbers[numbers.length - 1];
+                                const cleanNumber = lastNumber.replace(/,/g, '');
+                                appData[idx].newVal = formatCurrency(cleanNumber);
+                                renderTable();
+                            } 
+                        } catch (err) {
+                            console.error('OCR Error:', err);
+                        }
+                    };
+                    reader.readAsDataURL(blob);
+                    break;
+                }
+            }
+        };
+
+        window.clearImage = function(e, idx) {
+            e.stopPropagation();
+            appData[idx].image = null;
+            appData[idx].imgW = 0;
+            appData[idx].imgH = 0;
+            renderTable();
+        };
+        
+        window.updateRemark = function(idx, val) {
+            appData[idx].remark = val;
+        };
+
+		function renderTable() {
+			saveToLocal();			
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            let sumNew = 0;
+
+            appData.forEach((row, idx) => {
+                const nBase = parseNum(row.baseVal);
+                const nNew = parseNum(row.newVal);
+                
+                if (row.newVal && row.newVal.trim() !== '') sumNew += nNew;
+
+                let inputColorClass = "text-slate-800";
+                let symbolHtml = '';
+
+                if (row.newVal && row.newVal.trim() !== '') {
+                    const diff = Math.abs(nBase - nNew);
+                    const diffStr = formatNum(diff);
+                    
+                    if (diff < 0.01) {
+                        inputColorClass = "text-green-700 font-bold";
+                        symbolHtml = `ตรง`;
+                    } else {
+                        const diffDisplay = `<span class="text-xs font-bold mt-0.5">${diffStr}</span>`;
+                        if (nNew > nBase) {
+                            inputColorClass = "text-blue-700 font-bold";
+                            symbolHtml = `
+                                <div class="flex flex-col items-center leading-none text-blue-600">
+									=> Top-up ${diffDisplay}
+                                </div>`;
+                        } else {
+                            inputColorClass = "text-red-600 font-bold";
+                            symbolHtml = `
+                                <div class="flex flex-col items-center leading-none text-red-600">
+									=> ลบออก ${diffDisplay}
+                                </div>`;
+                        }
+                    }
+                } else {
+                    symbolHtml = `<div class="w-8 h-8 mx-auto"></div>`;
+                }
+
+                // IMAGE HTML LOGIC FOR TABLE CELL
+                const hasImage = row.image;
+				const imgHtml = hasImage 
+					? `<div class="relative w-full h-full flex items-center justify-center group">
+						 <img src="${row.image}" class="max-h-[50px] max-w-full object-contain rounded">
+						 <button onclick="clearImage(event, ${idx})" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+					   </div>`
+					: `<div contenteditable="true" class="w-full h-full border-2 border-dashed border-slate-200 rounded flex items-center justify-center text-slate-300 text-xs cursor-pointer hover:bg-slate-50 hover:border-blue-300 transition-all caret-transparent outline-none" onpaste="handleImagePaste(event, ${idx})" onclick="this.focus()">
+						 <span class="pointer-events-none">แคป - วาง</span>
+					   </div>`;
+
+                // Transaction Icon Logic (Multiple Images)
+                const hasTrans = row.transactionImages && row.transactionImages.length > 0;
+                const transBtnClass = hasTrans ? "bg-blue-100 text-blue-600 border-blue-200" : "bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200";
+                const badge = hasTrans ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full shadow-sm">${row.transactionImages.length}</span>` : '';
+                const transIcon = `<button onclick="openTransactionModal(${idx})" class="w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${transBtnClass} relative" title="เพิ่มรายละเอียดออกตั๋ว"><i data-lucide="images" class="w-4 h-4"></i>${badge}</button>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 group transition-colors border-b border-slate-100 h-[60px]'; // Forced row height
+                
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-slate-700 text-xl break-words">${row.key}</td>
+                    <td class="p-3 font-mono text-slate-600 border-l bg-slate-50/30 text-right text-xl">${row.baseVal}</td>
+                    
+                    <td class="p-1 text-center align-middle bg-slate-50/10">
+                        ${symbolHtml}
+                    </td>
+
+                    <td class="p-0 border-l border-yellow-100 bg-yellow-50/10 relative group-focus-within:bg-yellow-50">
+	                        <input type="text" placeholder=""
+							       class="w-full h-full px-4 py-3 outline-none bg-transparent font-mono text-right cursor-pointer focus:bg-yellow-50 transition-colors text-xl ${inputColorClass}"
+							       value="${row.newVal}"
+							       onpaste="handleSmartPaste(event, ${idx})"
+							       oninput="this.value = this.value.replace(/[^0-9.,-]/g, ''); updateValue(${idx}, this.value)"
+							       onblur="finalizeInput(${idx}, this.value)">
+                    </td>
+
+                    <!-- NEW IMAGE COLUMN -->
+                    <td class="p-1 border-l border-slate-200 h-[60px]">
+                        ${imgHtml}
+                    </td>
+                    
+                    <td class="p-2 border-l">
+                        <div class="flex items-center bg-slate-50 rounded-lg px-2 border border-transparent focus-within:border-blue-300 focus-within:bg-white transition-colors h-full w-full gap-2">
+                            ${transIcon}
+                            <input type="text" 
+                                   class="flex-1 bg-transparent py-2 outline-none text-lg text-thai-lg text-slate-700 placeholder:text-slate-300 min-w-0"
+                                   placeholder="..."
+                                   value="${row.remark}"
+                                   oninput="updateRemark(${idx}, this.value)">
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            // Update Total logic...
+            totalData.new = sumNew;
+            document.getElementById('totalBase').innerText = formatNum(totalData.base);
+            document.getElementById('totalNew').innerText = formatNum(totalData.new);
+            
+            const diffTotal = Math.abs(totalData.base - totalData.new);
+            const diffTotalStr = formatNum(diffTotal);
+            let totalSymbolHtml = '';
+
+            const totalNewEl = document.getElementById('totalNew');
+            
+            if (totalData.new === 0 && appData.every(r => r.newVal === '')) {
+                 totalNewEl.className = "p-4 font-mono text-slate-800 border-l border-slate-200 bg-yellow-100/50 text-right text-xl";
+                 totalSymbolHtml = '';
+            } else {
+                 if (diffTotal < 0.01) {
+                    totalNewEl.className = "p-4 font-mono text-green-700 font-bold border-l border-slate-200 bg-green-50 text-right text-xl";
+                    totalSymbolHtml = `ตรง`;
+                 } else {
+                    const isLess = totalData.new < totalData.base;
+                    totalNewEl.className = `p-4 font-mono ${isLess ? 'text-blue-700' : 'text-red-600'} font-bold border-l border-slate-200 bg-yellow-50 text-right text-xl`;
+                    
+                    const diffDisplay = `<span class="text-xs font-bold mt-0.5">${diffTotalStr}</span>`;
+
+                    if (isLess) {
+                         totalSymbolHtml = `
+                            <div class="flex flex-col items-center leading-none text-red-600">
+                                -
+                            </div>`;
+                    } else {
+                         totalSymbolHtml = `
+                            <div class="flex flex-col items-center leading-none text-red-600">
+                                -
+                            </div>`;
+                    }
+                 }
+            }
+            document.getElementById('totalSymbol').innerHTML = totalSymbolHtml;
+            document.getElementById('totalRemarkStatus').innerHTML = '';
+
+            const summaryEl = document.getElementById('summaryStatus');
+            if (totalData.new === 0) summaryEl.innerHTML = '-';
+            else if (diffTotal < 0.01) summaryEl.innerHTML = '<span class="text-green-600 text-2xl">ตรง</span>';
+            else summaryEl.innerHTML = '<span class="text-red-500 text-2xl">มียอดไม่ตรง</span>';
+
+            lucide.createIcons(); 
+        }
+
+        window.finalizeInput = function(idx, val) {
+            if (isPasting) return; 
+            const formatted = formatCurrency(val);
+            appData[idx].newVal = formatted;
+            renderTable();
+        };
+
+        window.updateValue = function(idx, val) {
+            appData[idx].newVal = val;
+        };
+
+        window.handleSmartPaste = function(e, startIndex) {
+            e.preventDefault(); 
+            isPasting = true; 
+            const text = e.clipboardData.getData('text');
+            if (!text) { isPasting = false; return; }
+            
+            const lines = text.split(/\n/).map(l => l.trim()).filter(l => l);
+            lines.forEach((line, i) => {
+                const targetIndex = startIndex + i;
+                if (targetIndex < appData.length) {
+                    const matches = line.match(/-?([0-9,]+(\.[0-9]+)?)/g);
+                    let cleanVal = '';
+                    if (matches && matches.length > 0) {
+                         const lastMatch = matches[matches.length - 1];
+                         cleanVal = lastMatch.replace(/,/g, '');
+                    }
+                    appData[targetIndex].newVal = formatCurrency(cleanVal);
+                }
+            });
+            renderTable();
+            setTimeout(() => { isPasting = false; }, 50); 
+        };
+
+        window.updateRemark = function(idx, val) {
+            appData[idx].remark = val;
+        };
+
+        window.resetAll = function() {
+			localStorage.removeItem(AUTOSAVE_KEY);
+            location.reload();
+        };
+
+        // --- GHOST TABLE GENERATOR ---
+        function updateGhostTable() {
+            const ghostBody = document.getElementById('ghostBody');
+            const ghostTotal = document.getElementById('ghostTotal');
+            const ghostDetails = document.getElementById('ghostDetailsBody');
+            const ghostDetailsContainer = document.getElementById('ghostDetailsContainer');
+            
+            ghostBody.innerHTML = '';
+            ghostDetails.innerHTML = '';
+            ghostDetailsContainer.style.display = 'none';
+
+            document.getElementById('ghostSummaryStatus').innerHTML = document.getElementById('summaryStatus').innerHTML;
+
+            // Helper for standard centered content
+            const standardCenter = (content) => `
+                <div style="display: flex; align-items: center; justify-content: center; height: 60px; width: 100%;">
+                    ${content}
+                </div>
+            `;
+
+            // Helper for the SPLIT STACK (Symbol)
+            const splitStack = (arrow, diffText) => `
+                <div style="height: 60px; width: 100%; display: block;">
+                    <div style="height: 30px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; box-sizing: border-box;">
+                        <span style="line-height: 1; display: block;">${arrow}</span>
+                    </div>
+                    <div style="height: 30px; display: flex; align-items: flex-start; justify-content: center; padding-top: 2px; box-sizing: border-box;">
+                        <span style="line-height: 1; font-size: 14px; font-weight: bold; display: block;">${diffText}</span>
+                    </div>
+                </div>
+            `;
+
+            // Helper for Text Cells
+            const liftCell = (content, align = 'left') => `
+                <div style="display: flex; align-items: center; justify-content: ${align}; height: 60px; width: 100%; padding-bottom: 4px; box-sizing: border-box;">
+                    ${content}
+                </div>
+            `;
+
+            // Helper for Image Cell in Ghost Table
+            const imageGhostCell = (imgSrc) => {
+                if (!imgSrc) return '';
+                return `<div style="display: flex; align-items: center; justify-content: center; height: 60px; width: 100%;">
+                            <img src="${imgSrc}" style="max-height: 50px; max-width: 100%; object-fit: contain;">
+                        </div>`;
+            };
+
+            let hasTransactions = false;
+
+            appData.forEach(row => {
+                const nBase = parseNum(row.baseVal);
+                const nNew = parseNum(row.newVal);
+                let symbolContent = '';
+                let symbolColor = 'color: #64748b;';
+                let rowColor = 'color: #1e293b;';
+
+                if (row.newVal && row.newVal.trim() !== '') {
+                    const diff = Math.abs(nBase - nNew);
+                    const diffStr = formatNum(diff);
+
+                    if (diff < 0.01) {
+                        symbolContent = standardCenter('<span style="display: block; line-height: 1;">ตรง</span>');
+                        symbolColor = 'color: #15803d;';
+                        rowColor = 'color: #15803d; font-weight: bold;';
+                    } else {
+                        const arrow = nNew < nBase ? '&lt;' : '&gt;';
+                        symbolContent = splitStack(arrow, diffStr);
+
+                        if (nNew < nBase) {
+                            symbolColor = 'color: #1d4ed8;';
+                            rowColor = 'color: #1d4ed8; font-weight: bold;';
+                        } else {
+                            symbolColor = 'color: #dc2626;';
+                            rowColor = 'color: #dc2626; font-weight: bold;';
+                        }
+                    }
+                }
+
+                const tr = document.createElement('tr');
+                tr.style.height = "60px"; 
+                tr.style.borderBottom = '1px solid #e2e8f0';
+                
+                tr.innerHTML = `
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px;">${liftCell(row.key)}</td>
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px; font-family: monospace;">${liftCell(row.baseVal, 'flex-end')}</td>
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0; height: 60px; font-size: 24px; font-weight: 900; line-height: 1; ${symbolColor}">${symbolContent}</td>
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px; font-family: monospace; ${rowColor}">${liftCell(row.newVal, 'flex-end')}</td>
+                    <td style="border-right: 1px solid #cbd5e1; padding: 0 6px; height: 60px;">${imageGhostCell(row.image)}</td>
+                    <td style="padding: 0 12px; height: 60px;">${liftCell(row.remark)}</td>
+                `;
+                ghostBody.appendChild(tr);
+
+                // Handle Transactions for Ghost Report (Image)
+                if (row.transactionImages && row.transactionImages.length > 0) {
+                    hasTransactions = true;
+                    const detailBlock = document.createElement('div');
+                    detailBlock.style.marginBottom = "40px";
+                    
+                    let imagesHtml = '';
+                    row.transactionImages.forEach(src => {
+                        imagesHtml += `<img src="${src}" style="max-width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; display: block;">`;
+                    });
+
+                    detailBlock.innerHTML = `
+                        <div style="background: #f8fafc; padding: 20px; border-left: 4px solid #3b82f6; margin-bottom: 10px;">
+                            <div style="font-weight: bold; font-size: 22px; color: #1e293b; margin-bottom: 15px;">${row.key} Transaction Evidence</div>
+                            ${imagesHtml}
+                        </div>
+                    `;
+                    ghostDetails.appendChild(detailBlock);
+                }
+            });
+
+            if (hasTransactions) {
+                ghostDetailsContainer.style.display = 'block';
+            }
+
+            // GHOST FOOTER
+            const diffTotal = Math.abs(totalData.base - totalData.new);
+            let tSym = '';
+            let tColor = 'color: #64748b;';
+            
+            if (totalData.new > 0 || appData.some(r => r.newVal)) {
+                if (diffTotal < 0.01) {
+                    tSym = standardCenter('<span style="display: block; line-height: 1;">ตรง</span>');
+                    tColor = 'color: #15803d;';
+                } else {
+                    const arrow = totalData.new < totalData.base ? '&lt;' : '&gt;';
+                    tSym = splitStack(arrow, formatNum(diffTotal));
+                    tColor = totalData.new < totalData.base ? 'color: #1d4ed8;' : 'color: #dc2626;';
+                }
+            }
+
+            ghostTotal.innerHTML = `
+                <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px;">${liftCell('TOTAL')}</td>
+                <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px; font-family: monospace;">${liftCell(formatNum(totalData.base), 'flex-end')}</td>
+                <td style="border-right: 1px solid #cbd5e1; padding: 0; height: 60px; font-size: 24px; font-weight: 900; line-height: 1; ${tColor}">${tSym}</td>
+                <td style="border-right: 1px solid #cbd5e1; padding: 0 12px; height: 60px; font-family: monospace; ${tColor}">${liftCell(formatNum(totalData.new), 'flex-end')}</td>
+                <td style="border-right: 1px solid #cbd5e1; padding: 0; height: 60px;"></td>
+                <td style="height: 60px;"></td>
+            `;
+        }
+
+        // --- EXPORT: PDF ---
+        window.exportTextPDF = async function() {
+            const btn = document.getElementById('btnExportPdf');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>Exporting...</span>`;
+            lucide.createIcons();
+
+            if (!window.jspdf) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            try {
+                const regularUrl = 'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Regular.ttf';
+                const boldUrl = 'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Bold.ttf';
+                
+                const [regularRes, boldRes] = await Promise.all([ fetch(regularUrl), fetch(boldUrl) ]);
+                const regularBuffer = await regularRes.arrayBuffer();
+                const boldBuffer = await boldRes.arrayBuffer();
+                
+                const toBase64 = (buffer) => {
+                    let binary = '';
+                    const bytes = new Uint8Array(buffer);
+                    const len = bytes.byteLength;
+                    for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
+                    return window.btoa(binary);
+                }
+
+                doc.addFileToVFS('Sarabun-Regular.ttf', toBase64(regularBuffer));
+                doc.addFileToVFS('Sarabun-Bold.ttf', toBase64(boldBuffer));
+                doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+                doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
+                doc.setFont('Sarabun');
+                
+                doc.setFontSize(18);
+                doc.setFont('Sarabun', 'bold');
+                doc.text("Check Report", 14, 22);
+                doc.setFont('Sarabun', 'normal');
+                doc.setFontSize(10);
+                doc.text(`Date: ${new Date().toLocaleString('th-TH')}`, 14, 28);
+
+                const body = appData.map(r => {
+                    const nBase = parseNum(r.baseVal);
+                    const nNew = parseNum(r.newVal);
+                    let sym = '';
+                    
+                    if (r.newVal && r.newVal.trim() !== '') {
+                        const diff = Math.abs(nBase - nNew);
+                        if (diff < 0.01) {
+                            sym = 'ตรง';
+                        } else {
+                            const arrow = nNew > nBase ? '=> Top-up' : '=> ลบออก';
+                            sym = `${arrow}\n${formatNum(diff)}`;
+                        }
+                    }
+                    return [r.key, r.baseVal, sym, r.newVal, '', r.remark]; // Empty string for image col
+                });
+                
+                let totalSym = '';
+                const diffTotal = Math.abs(totalData.base - totalData.new);
+                if (totalData.new !== 0 || appData.some(r => r.newVal)) {
+                     if (diffTotal < 0.01) {
+                         totalSym = 'ตรง';
+                     } else {
+                         const arrow = totalData.new < totalData.base ? '<' : '>';
+                         totalSym = `-`;
+                     }
+                }
+                body.push(['TOTAL', formatNum(totalData.base), totalSym, formatNum(totalData.new), '', '']);
+
+                doc.autoTable({
+                    head: [['XO', 'ยอดในบัญชี', '*', 'ยอด Airlines', 'แคปยอด', 'หมายเหตุ']], 
+                    body: body,
+                    startY: 35,
+                    theme: 'grid',
+                    styles: { font: 'Sarabun', fontStyle: 'normal', fontSize: 11, valign: 'middle', cellPadding: 2 },
+                    headStyles: { 
+                        fillColor: [241, 245, 249], 
+                        textColor: [71, 85, 105], 
+                        fontStyle: 'bold',
+                        fontSize: 12,
+                        lineWidth: 0.1, 
+                        lineColor: [203, 213, 225]
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 25, fontStyle: 'bold' }, 
+                        1: { cellWidth: 28, halign: 'right' }, 
+                        2: { cellWidth: 20, halign: 'center', fontStyle: 'bold', fontSize: 16 }, 
+                        3: { cellWidth: 28, halign: 'right' }, 
+                        4: { cellWidth: 28, minCellHeight: 15, halign: 'center' }, 
+                        5: { cellWidth: 'auto' }
+                    },
+                    didDrawCell: (data) => {
+					
+					// Hide left border of column 2 ("*" column) by drawing over it with background color
+					if (data.column.index === 2) {
+						doc.setDrawColor(255, 255, 255); // White color (or match your page background)
+						doc.setLineWidth(0.2); // Match or slightly thicker than your grid line width
+						doc.line(
+							data.cell.x,                    // x1: left edge of cell
+							data.cell.y,                    // y1: top of cell
+							data.cell.x,                    // x2: same x (vertical line)
+							data.cell.y + data.cell.height  // y2: bottom of cell
+						);
+					}                    
+
+					// Draw Image Logic with SAFETY MARGIN
+                        if (data.column.index === 4 && data.section === 'body' && data.row.index < appData.length) {
+                            const row = appData[data.row.index];
+                            if (row && row.image && row.imgW && row.imgH) {
+                                try {
+                                    // 1pt SAFETY INSET to stop border overlap
+                                    const inset = 1; 
+                                    const cellW = data.cell.width - (inset * 2);
+                                    const cellH = data.cell.height - (inset * 2);
+                                    const posX = data.cell.x + inset;
+                                    const posY = data.cell.y + inset;
+                                    
+                                    const imgRatio = row.imgW / row.imgH;
+                                    const cellRatio = cellW / cellH;
+                                    
+                                    let finalW, finalH;
+                                    
+                                    if (imgRatio > cellRatio) {
+                                        finalW = cellW;
+                                        finalH = cellW / imgRatio;
+                                    } else {
+                                        finalH = cellH;
+                                        finalW = cellH * imgRatio;
+                                    }
+                                    
+                                    const x = posX + (cellW - finalW) / 2;
+                                    const y = posY + (cellH - finalH) / 2;
+                                    
+                                    doc.addImage(row.image, 'JPEG', x, y, finalW, finalH);
+                                } catch(e) {
+                                    console.error("Failed to add image to PDF", e);
+                                }
+                            }
+                        }
+                    },
+                    didParseCell: (data) => {
+                        if (data.section === 'body') {
+                             const row = appData[data.row.index];
+                             // Font size reduction for Diff and Total
+                             if (data.column.index === 2) {
+                                 data.cell.styles.fontSize = 8; 
+                             }
+                             
+                             // FIX for Small Image in Empty Row: Force min height if image exists
+                             if (data.column.index === 4 && row && row.image) {
+                                 data.cell.styles.minCellHeight = 15;
+                             }
+
+                             if (row && row.newVal && row.newVal.trim() !== '') {
+                                 const nBase = parseNum(row.baseVal);
+                                 const nNew = parseNum(row.newVal);
+                                 const diff = Math.abs(nBase - nNew);
+
+                                 if (data.column.index === 2 || data.column.index === 3) {
+                                     if (diff < 0.01) data.cell.styles.textColor = [21, 128, 61]; 
+                                     else if (nNew < nBase) data.cell.styles.textColor = [29, 78, 216]; 
+                                     else data.cell.styles.textColor = [220, 38, 38]; 
+                                 }
+                             }
+                             // Handle Total Row
+                             if (data.row.index === appData.length) {
+                                 const diffTotal = Math.abs(totalData.base - totalData.new);
+                                 if (data.column.index === 2) {
+                                      data.cell.styles.fontSize = 8; 
+                                 }
+                                 if (data.column.index === 2 || data.column.index === 3) {
+                                     if (diffTotal < 0.01) data.cell.styles.textColor = [21, 128, 61]; 
+                                     else if (totalData.new < totalData.base) data.cell.styles.textColor = [29, 78, 216]; 
+                                     else data.cell.styles.textColor = [220, 38, 38]; 
+                                 }
+                             }
+                        }
+                    }
+                });
+
+                // --- PAGE 2+: TRANSACTION IMAGES (CONTINUOUS FLOW) ---
+                const transactions = appData.filter(r => r.transactionImages && r.transactionImages.length > 0);
+                
+                if (transactions.length > 0) {
+                    doc.addPage(); // Start Evidence on Page 2
+                    let currentY = 20;
+                    const margin = 5; // Reduced Margin
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const maxImgWidth = pageWidth - (margin * 2);
+
+                    doc.setFontSize(16); doc.setFont('Sarabun', 'bold');
+                    doc.text("รายละเอียดการออกบัตรโดยสาร", margin, currentY);
+                    currentY += 10;
+
+                    // Helper to load image for dimensions
+                    const getImageDims = (src) => {
+                        return new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => resolve({ w: img.width, h: img.height });
+                            img.src = src;
+                        });
+                    };
+
+                    for (const tx of transactions) {
+                        const headerHeight = 12;
+                        
+                        // 1. CALCULATE TOTAL BLOCK HEIGHT (Header + All Images)
+                        let totalBlockHeight = headerHeight;
+                        const imageDimensions = [];
+
+                        for (const imgSrc of tx.transactionImages) {
+                            const dims = await getImageDims(imgSrc);
+                            let imgW = dims.w * 0.75; 
+                            let imgH = dims.h * 0.75;
+
+                            // Constrain width
+                            if (imgW > maxImgWidth) {
+                                const ratio = maxImgWidth / imgW;
+                                imgW = maxImgWidth;
+                                imgH = imgH * ratio;
+                            }
+                            imageDimensions.push({ w: imgW, h: imgH, src: imgSrc });
+                            totalBlockHeight += imgH + 4; // Image + Padding
+                        }
+                        totalBlockHeight += 14; // Separator padding
+
+                        // 2. CHECK IF WHOLE BLOCK FITS
+                        // If not, we check if at least header + first image fits.
+                        // If even that doesn't fit, force new page.
+                        
+                        const firstImageHeight = imageDimensions.length > 0 ? imageDimensions[0].h : 0;
+                        const minRequiredHeight = headerHeight + firstImageHeight + 4;
+
+                        if (currentY + minRequiredHeight > pageHeight - margin) {
+                            doc.addPage();
+                            currentY = 20;
+                        }
+
+                        // 3. RENDER HEADER
+                        doc.setFillColor(246, 252, 0);
+                        doc.rect(margin, currentY, pageWidth - (margin*2), 8, 'F');
+                        doc.setFontSize(12); doc.setFont('Sarabun', 'bold'); doc.setTextColor(139, 0, 0);
+                        doc.text(`${tx.key}`, margin + 2, currentY + 5.5);
+                        currentY += 12;
+
+                        // 4. RENDER IMAGES
+                        for (const imgData of imageDimensions) {
+                            // Check if THIS specific image fits
+                            if (currentY + imgData.h > pageHeight - margin) {
+                                doc.addPage();
+                                currentY = 20; 
+                                // Optional: Repeat header on new page? 
+                                // For now, we just continue the flow as requested ("stay in next page together")
+                            }
+
+                            doc.addImage(imgData.src, 'JPEG', margin, currentY, imgData.w, imgData.h);
+                            currentY += imgData.h + 4; 
+                        }
+
+                        // Add Separator
+                        currentY += 4;
+                        if (currentY < pageHeight - margin) {
+                            doc.setDrawColor(226, 232, 240); 
+                            doc.line(margin, currentY, pageWidth - margin, currentY);
+                            currentY += 10; 
+                        } else {
+                            currentY = 20; // Reset for next page if we are exactly at bottom
+                            doc.addPage();
+                        }
+                    }
+                }
+
+                doc.save('Check_Report.pdf');
+            } catch (err) { console.error(err); alert("Error generating PDF"); }
+            setTimeout(() => { btn.innerHTML = originalText; lucide.createIcons(); }, 1000);
+        };
+    </script>
+</body>
+</html>
