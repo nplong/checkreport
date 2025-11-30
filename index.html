@@ -567,22 +567,20 @@
                     
                     if (diff < 0.01) {
                         inputColorClass = "text-green-700 font-bold";
-                        symbolHtml = `<i data-lucide="equal" class="w-8 h-8 text-green-600 mx-auto font-bold stroke-[3]"></i>`;
+                        symbolHtml = `ตรง`;
                     } else {
                         const diffDisplay = `<span class="text-xs font-bold mt-0.5">${diffStr}</span>`;
                         if (nNew > nBase) {
                             inputColorClass = "text-blue-700 font-bold";
                             symbolHtml = `
                                 <div class="flex flex-col items-center leading-none text-blue-600">
-                                    <i data-lucide="chevron-left" class="w-8 h-8 font-bold stroke-[3]"></i>
-                                    ${diffDisplay}
+                                    => Top-up ${diffDisplay}
                                 </div>`;
                         } else {
                             inputColorClass = "text-red-600 font-bold";
                             symbolHtml = `
                                 <div class="flex flex-col items-center leading-none text-red-600">
-                                    <i data-lucide="chevron-right" class="w-8 h-8 font-bold stroke-[3]"></i>
-                                    ${diffDisplay}
+                                    => ลบออก ${diffDisplay}
                                 </div>`;
                         }
                     }
@@ -663,7 +661,7 @@
             } else {
                  if (diffTotal < 0.01) {
                     totalNewEl.className = "p-4 font-mono text-green-700 font-bold border-l border-slate-200 bg-green-50 text-right text-xl";
-                    totalSymbolHtml = `<i data-lucide="equal" class="w-8 h-8 text-green-600 mx-auto font-bold stroke-[3]"></i>`;
+                    totalSymbolHtml = `ตรง`;
                  } else {
                     const isLess = totalData.new < totalData.base;
                     totalNewEl.className = `p-4 font-mono ${isLess ? 'text-blue-700' : 'text-red-600'} font-bold border-l border-slate-200 bg-yellow-50 text-right text-xl`;
@@ -673,12 +671,12 @@
                     if (isLess) {
                          totalSymbolHtml = `
                             <div class="flex flex-col items-center leading-none text-red-600">
-                                DIFF
+                                -
                             </div>`;
                     } else {
                          totalSymbolHtml = `
                             <div class="flex flex-col items-center leading-none text-red-600">
-                                DIFF
+                                -
                             </div>`;
                     }
                  }
@@ -688,8 +686,8 @@
 
             const summaryEl = document.getElementById('summaryStatus');
             if (totalData.new === 0) summaryEl.innerHTML = '-';
-            else if (diffTotal < 0.01) summaryEl.innerHTML = '<span class="text-green-600 text-2xl">PASSED</span>';
-            else summaryEl.innerHTML = '<span class="text-red-500 text-2xl">ATTN NEEDED</span>';
+            else if (diffTotal < 0.01) summaryEl.innerHTML = '<span class="text-green-600 text-2xl">ตรง</span>';
+            else summaryEl.innerHTML = '<span class="text-red-500 text-2xl">มียอดไม่ตรง</span>';
 
             lucide.createIcons(); 
         }
@@ -798,7 +796,7 @@
                     const diffStr = formatNum(diff);
 
                     if (diff < 0.01) {
-                        symbolContent = standardCenter('<span style="display: block; line-height: 1;">=</span>');
+                        symbolContent = standardCenter('<span style="display: block; line-height: 1;">ตรง</span>');
                         symbolColor = 'color: #15803d;';
                         rowColor = 'color: #15803d; font-weight: bold;';
                     } else {
@@ -861,7 +859,7 @@
             
             if (totalData.new > 0 || appData.some(r => r.newVal)) {
                 if (diffTotal < 0.01) {
-                    tSym = standardCenter('<span style="display: block; line-height: 1;">=</span>');
+                    tSym = standardCenter('<span style="display: block; line-height: 1;">ตรง</span>');
                     tColor = 'color: #15803d;';
                 } else {
                     const arrow = totalData.new < totalData.base ? '&lt;' : '&gt;';
@@ -928,9 +926,9 @@
                     if (r.newVal && r.newVal.trim() !== '') {
                         const diff = Math.abs(nBase - nNew);
                         if (diff < 0.01) {
-                            sym = '=';
+                            sym = 'ตรง';
                         } else {
-                            const arrow = nNew < nBase ? '>' : '<';
+                            const arrow = nNew > nBase ? '=> Top-up' : '=> ลบออก';
                             sym = `${arrow}\n${formatNum(diff)}`;
                         }
                     }
@@ -944,13 +942,13 @@
                          totalSym = 'ตรง';
                      } else {
                          const arrow = totalData.new < totalData.base ? '<' : '>';
-                         totalSym = `DIFF`;
+                         totalSym = `-`;
                      }
                 }
                 body.push(['TOTAL', formatNum(totalData.base), totalSym, formatNum(totalData.new), '', '']);
 
                 doc.autoTable({
-                    head: [['XO', 'ยอดในบัญชี', '', 'ยอด Airlines', 'แคปยอด', 'หมายเหตุ']], 
+                    head: [['XO', 'ยอดในบัญชี', '*', 'ยอด Airlines', 'แคปยอด', 'หมายเหตุ']], 
                     body: body,
                     startY: 35,
                     theme: 'grid',
@@ -966,7 +964,7 @@
                     columnStyles: {
                         0: { cellWidth: 25, fontStyle: 'bold' }, 
                         1: { cellWidth: 28, halign: 'right' }, 
-                        2: { cellWidth: 17, halign: 'center', fontStyle: 'bold', fontSize: 16 }, 
+                        2: { cellWidth: 20, halign: 'center', fontStyle: 'bold', fontSize: 16 }, 
                         3: { cellWidth: 28, halign: 'right' }, 
                         4: { cellWidth: 28, minCellHeight: 15, halign: 'center' }, 
                         5: { cellWidth: 'auto' }
@@ -1059,7 +1057,7 @@
                     const maxImgWidth = pageWidth - (margin * 2);
 
                     doc.setFontSize(16); doc.setFont('Sarabun', 'bold');
-                    doc.text("รายละเอียดการออกตั๋ว", margin, currentY);
+                    doc.text("รายละเอียดการออกบัตรโดยสาร", margin, currentY);
                     currentY += 10;
 
                     // Helper to load image for dimensions
@@ -1107,7 +1105,7 @@
                         }
 
                         // 3. RENDER HEADER
-                        doc.setFillColor(241, 245, 249);
+                        doc.setFillColor(246, 252, 0);
                         doc.rect(margin, currentY, pageWidth - (margin*2), 8, 'F');
                         doc.setFontSize(12); doc.setFont('Sarabun', 'bold'); doc.setTextColor(139, 0, 0);
                         doc.text(`${tx.key}`, margin + 2, currentY + 5.5);
